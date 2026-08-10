@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "52180394470",
+    "project_id": "chat-10084",
+    "storage_bucket": "chat-10084.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:52180394470:android:a59f04ccf0750235247627",
+        "android_client_info": {
+          "package_name": "com.abdteam.muali"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwwM0j11SWCxUSEKO091LJ92xzk_CVuTU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

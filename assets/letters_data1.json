@@ -1,0 +1,539 @@
+  [
+    {
+      "id": 1,
+      "title": "Әлиф",
+      "description": "\"Алиф\" - единственная буква арабского алфавита не обозначающая никакого согласного звука.",
+      "variations": [
+        {"symbol": "ا", "transcription": "алиф", "position": "Начальное"},
+        {"symbol": "اَ", "transcription": "а", "position": "Начальное"},
+        {"symbol": "اِ", "transcription": "и", "position": "Начальное"},
+        {"symbol": "اُ", "transcription": "у", "position": "Начальное"},
+        {"symbol": "ر", "transcription": "буква ра", "position": "Начальное"},
+        {"symbol": "رَ", "transcription": "ра", "position": "Начальное"},
+        {"symbol": "رِ", "transcription": "ри", "position": "Начальное"},
+        {"symbol": "رُ", "transcription": "ру", "position": "Начальное"},
+        {"symbol": "اَرْ", "transcription": "ар", "position": "Начальное"},
+        {"symbol": "اِرْ", "transcription": "ир", "position": "Начальное"},
+        {"symbol": "اُرْ", "transcription": "ур", "position": "Начальное"}
+      ],
+      "words": [
+        {"word": "اَلْكِتَاب", "translation": "Книга"},
+        {"word": "اَلْمَدْرَسَة", "translation": "Школа"},
+        {"word": "اَلْبَيْت", "translation": "Дом"}
+      ]
+    },
+    {
+      "id": 2,
+      "title": "За",
+      "description": "Буква за произносится как русское \"з\"",
+      "variations": [
+        {"symbol": "ز", "transcription": "буква за", "position": "Начальное"},
+        {"symbol": "زَ", "transcription": "за", "position": "Срединное"},
+        {"symbol": "زِ", "transcription": "зи", "position": "Конечное"},
+        {"symbol": "زُ", "transcription": "зу", "position": "Обособленное"},
+        {"symbol": "اَزْ", "transcription": "аз", "position": "Обособленное"},
+        {"symbol": "اِزْ", "transcription": "из", "position": "Обособленное"},
+        {"symbol": "اُزْ", "transcription": "уз", "position": "Обособленное"},
+        {"symbol": "رَزْ", "transcription": "раз", "position": "Обособленное"},
+        {"symbol": "رِزْ", "transcription": "риз", "position": "Обособленное"},
+        {"symbol": "رُزْ", "transcription": "руз", "position": "Обособленное"},
+        {"symbol": "زَرْ", "transcription": "зар", "position": "Обособленное"},
+        {"symbol": "زِرْ", "transcription": "зир", "position": "Обособленное"},
+        {"symbol": "زُرْ", "transcription": "зур", "position": "Обособленное"},
+        {"symbol": "اَزْرُ", "transcription": "азру", "position": "Обособленное"},
+        {"symbol": "اِزْرُ", "transcription": "изру", "position": "Обособленное"},
+        {"symbol": "اُزْرُ", "transcription": "узру", "position": "Обособленное"},
+        {"symbol": "اُرْزُ", "transcription": "урзу", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "ظِلّ", "translation": "Тень"},
+        {"word": "ظَرْف", "translation": "Конверт"},
+        {"word": "ظَبْي", "translation": "Газель"}
+      ]
+    },
+        {
+      "id": 3,
+      "title": "Мим",
+      "description": "Буква \"мим\". произносится как руское \"м\" ",
+      "variations": [
+        {"symbol": "م", "transcription": "мим", "position": "Начальное"},
+        {"symbol": "مَ", "transcription": "ма", "position": "Срединное"},
+        {"symbol": "مِ", "transcription": "ми", "position": "Конечное"},
+        {"symbol": "مُ", "transcription": "му", "position": "Обособленное"},
+        {"symbol": "اَمْْ", "transcription": "ам", "position": "Конечное"},
+        {"symbol": "اِمْ", "transcription": "им", "position": "Конечное"},
+        {"symbol": "اُمْ", "transcription": "ум", "position": "Конечное"},
+        {"symbol": "مُرْ", "transcription": "мур", "position": "Конечное"},
+        {"symbol": "مُزْ", "transcription": "муз", "position": "Конечное"},
+        {"symbol": "رُمْ", "transcription": "рум", "position": "Конечное"},
+        {"symbol": "اَمَرَ", "transcription": "амара", "position": "Конечное"},
+        {"symbol": "اَمِرَ", "transcription": "умира", "position": "Конечное"},
+        {"symbol": "اَمْرُ", "transcription": "амру", "position": "Конечное"},
+        {"symbol": "اِمْرُ", "transcription": "имру", "position": "Конечное"},
+        {"symbol": "رَمْزُ", "transcription": "рамзу", "position": "Конечное"},
+        {"symbol": "اِرْمِ", "transcription": "ирми", "position": "Конечное"},
+        {"symbol": "مَرْمَرْ", "transcription": "мармар", "position": "Конечное"},
+        {"symbol": "رَمْرَمُ", "transcription": "рамраму", "position": "Конечное"},
+        {"symbol": "زَمْزَمُ", "transcription": "замзаму", "position": "Конечное"},
+        {"symbol": "اَرْزَمُ", "transcription": "арзаму", "position": "Конечное"}
+      ],
+      "words": [
+        {"word": "مَاء", "translation": "Вода"},
+        {"word": "مِفْتَاح", "translation": "Ключ"},
+        {"word": "مَوْز", "translation": "Банан"}
+      ]
+    },
+        {
+      "id": 4,
+      "title": "Та",
+      "description": "Буква \"та\".проихносится как русский звук \"т\" ",
+      "variations": [
+        {"symbol": "ت", "transcription": "буква та ", "position": "Начальное"},
+        {"symbol": "تَ", "transcription": "та", "position": "Срединное"},
+        {"symbol": "تِ", "transcription": "ти", "position": "Конечное"},
+        {"symbol": "تُ", "transcription": "ту", "position": "Обособленное"},
+        {"symbol": "مَتْ", "transcription": "мат", "position": "Конечное"},
+        {"symbol": "مِتْ", "transcription": "мит", "position": "Конечное"},
+        {"symbol": "مُتْ", "transcription": "мут", "position": "Конечное"},
+        {"symbol": "تَمَرُ", "transcription": "тамару", "position": "Конечное"},
+        {"symbol": "تَرِرْ", "transcription": "турир", "position": "Конечное"},
+        {"symbol": "زُرْتَ", "transcription": "зурта", "position": "Конечное"},
+        {"symbol": "اَمَرْتِ", "transcription": "амарти", "position": "Конечное"},
+        {"symbol": "مَرَرْتُ", "transcription": "марарту", "position": "Конечное"},
+        {"symbol": "اُمِرْتُ", "transcription": "умирту", "position": "Конечное"},
+        {"symbol": "اَمَرَتْ", "transcription": "амарту", "position": "Конечное"},
+        {"symbol": "اَمَرْتُمْ", "transcription": "амартум", "position": "Конечное"},
+        {"symbol": "اُمِرْتُمْ", "transcription": "умиртум", "position": "Конечное"},
+        {"symbol": "مَرَرْتُمْ", "transcription": "марартум", "position": "Конечное"},
+        {"symbol": "مُُرِرُتُمْ", "transcription": "муриртум", "position": "Конечное"}
+      ],
+      "words": [
+        {"word": "طَبَب", "translation": "Медицина"},
+        {"word": "طَيْر", "translation": "Птица"},
+        {"word": "طِفْل", "translation": "Ребенок"}
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Нун",
+      "description": "Буква \"нун\". произносится как русский звук \"н\" ",
+      "variations": [
+        {"symbol": "نـ", "transcription": "н", "position": "Начальное"},
+        {"symbol": "ـنـ", "transcription": "н", "position": "Срединное"},
+        {"symbol": "ـن", "transcription": "н", "position": "Конечное"},
+        {"symbol": "ن", "transcription": "н", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "نَهْر", "translation": "Река"},
+        {"word": "نَجْم", "translation": "Звезда"},
+        {"word": "نَمْل", "translation": "Муравей"}
+      ]
+    },
+    {
+      "id": 17,
+      "title": "Бә",
+      "description": "Буква «бә» передает звук [б]. Произносится полным смыканием губ.",
+      "variations": [
+        {"symbol": "بـ", "transcription": "б", "position": "Начальное"},
+        {"symbol": "ـبـ", "transcription": "б", "position": "Срединное"},
+        {"symbol": "ـب", "transcription": "б", "position": "Конечное"},
+        {"symbol": "ب", "transcription": "б", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "بَاب", "translation": "Дверь"},
+        {"word": "بَرّ", "translation": "Суша"},
+        {"word": "بَيْت", "translation": "Дом"}
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Тә",
+      "description": "Буква «тә» передает глухой альвеолярный звук [т].",
+      "variations": [
+        {"symbol": "تـ", "transcription": "т", "position": "Начальное"},
+        {"symbol": "ـتـ", "transcription": "т", "position": "Срединное"},
+        {"symbol": "ـت", "transcription": "т", "position": "Конечное"},
+        {"symbol": "ت", "transcription": "т", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "تَاج", "translation": "Корона"},
+        {"word": "تِين", "translation": "Инжир"},
+        {"word": "تَمْر", "translation": "Финики"}
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Сә",
+      "description": "Буква «сә» передает межзубный звук [с].",
+      "variations": [
+        {"symbol": "ثـ", "transcription": "с", "position": "Начальное"},
+        {"symbol": "ـثـ", "transcription": "с", "position": "Срединное"},
+        {"symbol": "ـث", "transcription": "с", "position": "Конечное"},
+        {"symbol": "ث", "transcription": "с", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "ثَوْب", "translation": "Одежда"},
+        {"word": "ثَلْج", "translation": "Снег"},
+        {"word": "ثَوْر", "translation": "Бык"}
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Җим",
+      "description": "Буква «җим» передает звонкий постальвеолярный звук [дж].",
+      "variations": [
+        {"symbol": "جـ", "transcription": "җ", "position": "Начальное"},
+        {"symbol": "ـجـ", "transcription": "җ", "position": "Срединное"},
+        {"symbol": "ـج", "transcription": "җ", "position": "Конечное"},
+        {"symbol": "ج", "transcription": "җ", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "جَمَل", "translation": "Верблюд"},
+        {"word": "جَبَل", "translation": "Гора"},
+        {"word": "جُوع", "translation": "Голод"}
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Хә (мягкая)",
+      "description": "Глубокий гортанный глухой фрикативный звук.",
+      "variations": [
+        {"symbol": "حـ", "transcription": "һ", "position": "Начальное"},
+        {"symbol": "ـحـ", "transcription": "һ", "position": "Срединное"},
+        {"symbol": "ـح", "transcription": "һ", "position": "Конечное"},
+        {"symbol": "ح", "transcription": "һ", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "حَبْل", "translation": "Верёвка"},
+        {"word": "حَمَام", "translation": "Голубь"},
+        {"word": "حَلِب", "translation": "Молоко"}
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Ха (твердая)",
+      "description": "Твердый задненёбный глухой звук.",
+      "variations": [
+        {"symbol": "خـ", "transcription": "х", "position": "Начальное"},
+        {"symbol": "ـخـ", "transcription": "х", "position": "Срединное"},
+        {"symbol": "ـخ", "transcription": "х", "position": "Конечное"},
+        {"symbol": "خ", "transcription": "х", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "خُبْز", "translation": "Хлеб"},
+        {"word": "خَال", "translation": "Дядя"},
+        {"word": "خَوْخ", "translation": "Персик"}
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Дәл",
+      "description": "Звонкий альвеолярный взрывной звук [д].",
+      "variations": [
+        {"symbol": "د", "transcription": "д", "position": "Обособленное / Начальное"},
+        {"symbol": "ـد", "transcription": "д", "position": "Срединное / Конечное"}
+      ],
+      "words": [
+        {"word": "دَار", "translation": "Дом"},
+        {"word": "دَبّ", "translation": "Медведь"},
+        {"word": "دُل", "translation": "Ведро"}
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Зәл",
+      "description": "Межзубный звонкий звук [з].",
+      "variations": [
+        {"symbol": "ذ", "transcription": "з", "position": "Обособленное / Начальное"},
+        {"symbol": "ـذ", "transcription": "з", "position": "Срединное / Конечное"}
+      ],
+      "words": [
+        {"word": "ذَهَب", "translation": "Золото"},
+        {"word": "ذِئْب", "translation": "Волк"},
+        {"word": "ذُرَة", "translation": "Кукуруза"}
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Ра",
+      "description": "Раскатистый альвеолярный звук [р].",
+      "variations": [
+        {"symbol": "ر", "transcription": "р", "position": "Обособленное / Начальное"},
+        {"symbol": "ـر", "transcription": "р", "position": "Срединное / Конечное"}
+      ],
+      "words": [
+        {"word": "رَجُل", "translation": "Мужчина"},
+        {"word": "رُمْح", "translation": "Копье"},
+        {"word": "رَأْس", "translation": "Голова"}
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Зә",
+      "description": "Звонкий свистящий звук [з].",
+      "variations": [
+        {"symbol": "ز", "transcription": "з", "position": "Обособленное / Начальное"},
+        {"symbol": "ـز", "transcription": "з", "position": "Срединное / Конечное"}
+      ],
+      "words": [
+        {"word": "زَهْر", "translation": "Цветок"},
+        {"word": "زَيْت", "translation": "Масло"},
+        {"word": "زَرَافَة", "translation": "Жираф"}
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Син",
+      "description": "Глухой свистящий звук [с].",
+      "variations": [
+        {"symbol": "سـ", "transcription": "с", "position": "Начальное"},
+        {"symbol": "ـسـ", "transcription": "с", "position": "Срединное"},
+        {"symbol": "ـس", "transcription": "с", "position": "Конечное"},
+        {"symbol": "س", "transcription": "с", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "سَمَك", "translation": "Рыба"},
+        {"word": "سَحَاب", "translation": "Облако"},
+        {"word": "سَرِير", "translation": "Кровать"}
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Шин",
+      "description": "Мягкий шипящий звук [ш].",
+      "variations": [
+        {"symbol": "شـ", "transcription": "ш", "position": "Начальное"},
+        {"symbol": "ـشـ", "transcription": "ш", "position": "Срединное"},
+        {"symbol": "ـش", "transcription": "ш", "position": "Конечное"},
+        {"symbol": "ش", "transcription": "ш", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "شَمْس", "translation": "Солнце"},
+        {"word": "شَجَر", "translation": "Дерево"},
+        {"word": "شُعْلَة", "translation": "Пламя"}
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Сад",
+      "description": "Эмфатический глубокий свистящий звук [с].",
+      "variations": [
+        {"symbol": "صـ", "transcription": "с", "position": "Начальное"},
+        {"symbol": "ـصـ", "transcription": "с", "position": "Срединное"},
+        {"symbol": "ـص", "transcription": "с", "position": "Конечное"},
+        {"symbol": "ص", "transcription": "с", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "صَبْر", "translation": "Терпение"},
+        {"word": "صَقْر", "translation": "Сокол"},
+        {"word": "صُنْدُوق", "translation": "Ящик"}
+      ]
+    },
+    {
+      "id": 15,
+      "title": "Дад",
+      "description": "Эмфатический звонкий взрывной звук.",
+      "variations": [
+        {"symbol": "ضـ", "transcription": "д", "position": "Начальное"},
+        {"symbol": "ـضـ", "transcription": "д", "position": "Срединное"},
+        {"symbol": "ـض", "transcription": "д", "position": "Конечное"},
+        {"symbol": "ض", "transcription": "д", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "ضَرْب", "translation": "Удар"},
+        {"word": "ضِفْدَع", "translation": "Лягушка"},
+        {"word": "ضَوْء", "translation": "Свет"}
+      ]
+    },
+    {
+      "id": 16,
+      "title": "Та",
+      "description": "Эмфатический глухой взрывной звук [т].",
+      "variations": [
+        {"symbol": "طـ", "transcription": "т", "position": "Начальное"},
+        {"symbol": "ـطـ", "transcription": "т", "position": "Срединное"},
+        {"symbol": "ـط", "transcription": "т", "position": "Конечное"},
+        {"symbol": "ط", "transcription": "т", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "طَبَب", "translation": "Медицина"},
+        {"word": "طَيْر", "translation": "Птица"},
+        {"word": "طِفْل", "translation": "Ребенок"}
+      ]
+    },
+    {
+      "id": 17,
+      "title": "За",
+      "description": "Эмфатический межзубный звонкий звук.",
+      "variations": [
+        {"symbol": "ظـ", "transcription": "з", "position": "Начальное"},
+        {"symbol": "ـظـ", "transcription": "з", "position": "Срединное"},
+        {"symbol": "ـظ", "transcription": "з", "position": "Конечное"},
+        {"symbol": "ظ", "transcription": "з", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "ظِلّ", "translation": "Тень"},
+        {"word": "ظَرْف", "translation": "Конверт"},
+        {"word": "ظَبْي", "translation": "Газель"}
+      ]
+    },
+    {
+      "id": 18,
+      "title": "Әйн",
+      "description": "Звонкий гортанный фарингальный звук.",
+      "variations": [
+        {"symbol": "عـ", "transcription": "ғ", "position": "Начальное"},
+        {"symbol": "ـعـ", "transcription": "ғ", "position": "Срединное"},
+        {"symbol": "ـع", "transcription": "ғ", "position": "Конечное"},
+        {"symbol": "ع", "transcription": "ғ", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "عَسَل", "translation": "Мед"},
+        {"word": "عَيْن", "translation": "Глаз"},
+        {"word": "عَنَب", "translation": "Виноград"}
+      ]
+    },
+    {
+      "id": 19,
+      "title": "Ғайн",
+      "description": "Звонкий задненёбный фрикативный звук [ғ].",
+      "variations": [
+        {"symbol": "غـ", "transcription": "ғ", "position": "Начальное"},
+        {"symbol": "ـغـ", "transcription": "ғ", "position": "Срединное"},
+        {"symbol": "ـغ", "transcription": "ғ", "position": "Конечное"},
+        {"symbol": "غ", "transcription": "ғ", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "غَار", "translation": "Пещера"},
+        {"word": "غُرَاب", "translation": "Ворон"},
+        {"word": "غَمَام", "translation": "Тучи"}
+      ]
+    },
+    {
+      "id": 20,
+      "title": "Фә",
+      "description": "Губно-зубной глухой фрикативный звук [ф].",
+      "variations": [
+        {"symbol": "فـ", "transcription": "ф", "position": "Начальное"},
+        {"symbol": "ـفـ", "transcription": "ф", "position": "Срединное"},
+        {"symbol": "ـف", "transcription": "ф", "position": "Конечное"},
+        {"symbol": "ف", "transcription": "ф", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "فِيل", "translation": "Слон"},
+        {"word": "فَم", "translation": "Рот"},
+        {"word": "فَرَاشَة", "translation": "Бабочка"}
+      ]
+    },
+    {
+      "id": 21,
+      "title": "Ҡаф",
+      "description": "Глубокий задненёбный взрывной глухой звук [ق].",
+      "variations": [
+        {"symbol": "قـ", "transcription": "қ", "position": "Начальное"},
+        {"symbol": "ـقـ", "transcription": "қ", "position": "Срединное"},
+        {"symbol": "ـق", "transcription": "қ", "position": "Конечное"},
+        {"symbol": "ق", "transcription": "қ", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "قَمَر", "translation": "Луна"},
+        {"word": "قَلَم", "translation": "Ручка / Карандаш"},
+        {"word": "قِطّ", "translation": "Кот"}
+      ]
+    },
+    {
+      "id": 22,
+      "title": "Кәф",
+      "description": "Мягкий задненёбный взрывной звук [к].",
+      "variations": [
+        {"symbol": "كـ", "transcription": "к", "position": "Начальное"},
+        {"symbol": "ـكـ", "transcription": "к", "position": "Срединное"},
+        {"symbol": "ـك", "transcription": "к", "position": "Конечное"},
+        {"symbol": "ك", "transcription": "к", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "كَلْب", "translation": "Собака"},
+        {"word": "كِتَاب", "translation": "Книга"},
+        {"word": "كُرْسِيّ", "translation": "Стул"}
+      ]
+    },
+    {
+      "id": 23,
+      "title": "Ләм",
+      "description": "Альвеолярный боковой звук [л].",
+      "variations": [
+        {"symbol": "لـ", "transcription": "л", "position": "Начальное"},
+        {"symbol": "ـلـ", "transcription": "л", "position": "Срединное"},
+        {"symbol": "ـل", "transcription": "л", "position": "Конечное"},
+        {"symbol": "ل", "transcription": "л", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "لَبَن", "translation": "Молоко"},
+        {"word": "لِسَان", "translation": "Язык"},
+        {"word": "لَحْم", "translation": "Мясо"}
+      ]
+    },
+    {
+      "id": 24,
+      "title": "Мим",
+      "description": "Губно-губной носовой звук [м].",
+      "variations": [
+        {"symbol": "مـ", "transcription": "м", "position": "Начальное"},
+        {"symbol": "ـمـ", "transcription": "м", "position": "Срединное"},
+        {"symbol": "ـم", "transcription": "м", "position": "Конечное"},
+        {"symbol": "م", "transcription": "м", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "مَاء", "translation": "Вода"},
+        {"word": "مِفْتَاح", "translation": "Ключ"},
+        {"word": "مَوْز", "translation": "Банан"}
+      ]
+    },
+    
+    {
+      "id": 26,
+      "title": "Һә",
+      "description": "Легкий гортанный выдох [һ].",
+      "variations": [
+        {"symbol": "هـ", "transcription": "һ", "position": "Начальное"},
+        {"symbol": "ـهـ", "transcription": "һ", "position": "Срединное"},
+        {"symbol": "ـه", "transcription": "һ", "position": "Конечное"},
+        {"symbol": "ه", "transcription": "һ", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "هِلَال", "translation": "Месяц"},
+        {"word": "هِرَّة", "translation": "Кошка"},
+        {"word": "هَدِيَّة", "translation": "Подарок"}
+      ]
+    },
+    {
+      "id": 27,
+      "title": "Уау",
+      "description": "Полугласный звук [у] или [в].",
+      "variations": [
+        {"symbol": "و", "transcription": "у", "position": "Обособленное / Начальное"},
+        {"symbol": "ـو", "transcription": "у", "position": "Срединное / Конечное"}
+      ],
+      "words": [
+        {"word": "وَلَد", "translation": "Ребенок"},
+        {"word": "وَرْدَة", "translation": "Роза"},
+        {"word": "وَسَادَة", "translation": "Подушка"}
+      ]
+    },
+    {
+      "id": 28,
+      "title": "Йә",
+      "description": "Полугласный звук [й] или долгое [и].",
+      "variations": [
+        {"symbol": "يـ", "transcription": "й", "position": "Начальное"},
+        {"symbol": "ـيـ", "transcription": "й", "position": "Срединное"},
+        {"symbol": "ـي", "transcription": "й", "position": "Конечное"},
+        {"symbol": "ي", "transcription": "й", "position": "Обособленное"}
+      ],
+      "words": [
+        {"word": "يَد", "translation": "Рука"},
+        {"word": "يَمَام", "translation": "Горлица"},
+        {"word": "يَقِين", "translation": "Убежденность"}
+      ]
+    }
+  ]
