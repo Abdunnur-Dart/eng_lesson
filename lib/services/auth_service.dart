@@ -1,13 +1,19 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // NEW
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'settings_service.dart';
+import 'analytics_service.dart'; // NEW
 
 class AuthService extends ChangeNotifier {
   static final AuthService instance = AuthService._init();
   
   AuthService._init() { // CHANGED
-    _auth.authStateChanges().listen((_) { // NEW: Оповещаем UI при любых изменениях состояния авторизации
+    _auth.authStateChanges().listen((user) { // CHANGED
+      if (user != null) { // NEW
+        AnalyticsService.instance.setUserId(user.uid); // NEW
+      } else { // NEW
+        AnalyticsService.instance.setUserId(null); // NEW
+      } // NEW
       notifyListeners(); // NEW
     }); // NEW
   }
@@ -23,6 +29,7 @@ class AuthService extends ChangeNotifier {
         email: email,
         password: password,
       );
+      await AnalyticsService.instance.logLogin(method: 'email'); // NEW
       notifyListeners();
       return null; // Ошибок нет
     } on FirebaseAuthException catch (e) {
@@ -52,6 +59,8 @@ class AuthService extends ChangeNotifier {
           'createdAt': FieldValue.serverTimestamp(),
           'isPremium': false,
         }, SetOptions(merge: true));
+        await AnalyticsService.instance.setUserId(credential.user!.uid); // NEW
+        await AnalyticsService.instance.logSignUp(method: 'email'); // NEW
       }
 
       notifyListeners();
@@ -71,6 +80,7 @@ class AuthService extends ChangeNotifier {
   Future<void> signOut() async {
     await _auth.signOut();
     await SettingsService.instance.clearUserDataOnSignOut();
+    await AnalyticsService.instance.setUserId(null); // NEW
     notifyListeners();
   }
 }

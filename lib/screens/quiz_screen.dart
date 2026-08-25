@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/quiz_question.dart';
 import '../services/settings_service.dart';
 import '../services/quiz_service.dart';
+import '../services/analytics_service.dart'; // NEW
 
 class QuizScreen extends StatefulWidget {
   final int lessonId;
@@ -27,6 +28,12 @@ class _QuizScreenState extends State<QuizScreen> {
   bool _isAnswered = false;
   bool _isFinished = false;
 
+  @override // NEW
+  void initState() { // NEW
+    super.initState(); // NEW
+    AnalyticsService.instance.logScreenView(screenName: 'QuizScreen_${widget.lessonId}'); // NEW
+  } // NEW
+
   void _answerQuestion(int index, List<QuizQuestion> activeQuestions) {
     if (_isAnswered) return;
 
@@ -49,6 +56,12 @@ class _QuizScreenState extends State<QuizScreen> {
           _isFinished = true;
           double progressValue = _score / activeQuestions.length;
           SettingsService.instance.setLessonProgress(widget.lessonId, progressValue);
+          AnalyticsService.instance.logQuizCompleted( // NEW
+            lessonId: widget.lessonId, // NEW
+            score: _score, // NEW
+            total: activeQuestions.length, // NEW
+            percentage: progressValue * 100, // NEW
+          ); // NEW
         }
       });
     });

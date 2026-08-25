@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../services/auth_service.dart';
 import '../services/subscription_service.dart';
+import '../services/analytics_service.dart'; // NEW
 import 'payment_webview_screen.dart';
 
 class AuthPaymentScreen extends StatefulWidget {
@@ -27,6 +28,12 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
   Timer? _countdownTimer;
   Duration _remainingTime = Duration.zero;
   bool _isCancelling = false;
+
+  @override // NEW
+  void initState() { // NEW
+    super.initState(); // NEW
+    AnalyticsService.instance.logScreenView(screenName: 'AuthPaymentScreen'); // NEW
+  } // NEW
 
   @override
   void dispose() {
@@ -111,6 +118,11 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
     if (!mounted) return;
     setState(() => _isPaymentLoading = true);
 
+    AnalyticsService.instance.logEvent( // NEW
+      name: 'begin_checkout', // NEW
+      parameters: {'product_id': 'lifetime_access', 'price': 499.0}, // NEW
+    ); // NEW
+
     final confirmationUrl = await _subscriptionService.createOneTimePayment(
       userId: user.uid,
       productId: 'lifetime_access',
@@ -176,6 +188,14 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
     if (!mounted) return;
 
     Navigator.of(context, rootNavigator: true).pop();
+
+    if (activated) { // NEW
+      AnalyticsService.instance.logPurchase( // NEW
+        productId: 'lifetime_access', // NEW
+        price: 499.00, // NEW
+        currency: 'RUB', // NEW
+      ); // NEW
+    } // NEW
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

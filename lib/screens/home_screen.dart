@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/letter_model.dart';
 import '../services/settings_service.dart';
+import '../services/analytics_service.dart'; // NEW
 import 'detail_screen.dart';
 import 'settings_screen.dart';
 import 'auth_payment_screen.dart';
@@ -22,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadJsonData();
+    AnalyticsService.instance.logScreenView(screenName: 'HomeScreen'); // NEW
   }
 
   Future<void> _loadJsonData() async {
@@ -45,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showPaywallDialog(BuildContext dialogContext) {
+    AnalyticsService.instance.logPaywallViewed(); // NEW
     showDialog(
       context: dialogContext,
       builder: (ctx) => AlertDialog(
@@ -145,6 +148,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             _showPaywallDialog(context);
                             return;
                           }
+
+                          AnalyticsService.instance.logLessonView( // NEW
+                            lessonId: letterData.id, // NEW
+                            title: letterData.title, // NEW
+                          ); // NEW
 
                           await Navigator.push(
                             context,

@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'services/settings_service.dart';
-
+import 'services/analytics_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -29,6 +29,9 @@ class MyApp extends StatelessWidget {
 
         return MaterialApp(
           title: 'Арабские буквы',
+          navigatorObservers: [
+        AnalyticsService.instance.observer, // NEW - Автоматическое отслеживание экранов
+      ],
           debugShowCheckedModeBanner: false,
           themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
           theme: ThemeData(
