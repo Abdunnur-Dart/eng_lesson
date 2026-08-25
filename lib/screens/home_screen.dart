@@ -5,6 +5,7 @@ import '../models/letter_model.dart';
 import '../services/settings_service.dart';
 import 'detail_screen.dart';
 import 'settings_screen.dart';
+import 'auth_payment_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,12 +24,12 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadJsonData();
   }
 
-Future<void> _loadJsonData() async {
+  Future<void> _loadJsonData() async {
     try {
       final String response = await rootBundle.loadString('assets/letters_data.json');
       final List<dynamic> data = json.decode(response);
+      if (!mounted) return;
       setState(() {
-        // CHANGED - Ограничиваем список ровно 27 элементами
         _lettersData = data
             .map((item) => LetterModel.fromJson(item))
             .take(27)
@@ -36,33 +37,87 @@ Future<void> _loadJsonData() async {
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
     }
   }
 
+  void _showPaywallDialog(BuildContext dialogContext) {
+    showDialog(
+      context: dialogContext,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.workspace_premium, color: Colors.amber, size: 28),
+            SizedBox(width: 8),
+            Text('Премиум доступ'),
+          ],
+        ),
+        content: const Text(
+          'Вторая половина уроков доступна только в Премиум-версии. Разблокируйте все уроки и занимайтесь без ограничений!',
+          style: TextStyle(fontSize: 15),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Отмена', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber.shade700,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await Navigator.push(
+                dialogContext,
+                MaterialPageRoute(
+                  builder: (context) => const AuthPaymentScreen(),
+                ),
+              );
+              if (!mounted) return; // NEW
+              setState(() {}); // NEW: Принудительно перестраиваем сетку после возврата с экрана оплаты
+            },
+            child: const Text('Купить Premium'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: SettingsService.instance,
+    return ListenableBuilder(
+      listenable: SettingsService.instance,
       builder: (context, child) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final crossAxisCount = screenWidth > 600 ? 6 : 4;
+
+        final isPremium = SettingsService.instance.isPremium;
+        final unlockedCount = (_lettersData.length / 2).ceil();
+
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Муаллим Сани - 28 Букв'),
+            title: const Text('Арабские буквы'),
             backgroundColor: Colors.teal.shade800,
             foregroundColor: Colors.white,
             centerTitle: true,
             actions: [
               IconButton(
                 icon: const Icon(Icons.settings),
-                onPressed: () {
-                  Navigator.push(
+                onPressed: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const SettingsScreen(),
                     ),
                   );
+                  if (!mounted) return;
+                  setState(() {});
                 },
               ),
             ],
@@ -72,31 +127,36 @@ Future<void> _loadJsonData() async {
               : Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
                     ),
                     itemCount: _lettersData.length,
                     itemBuilder: (context, index) {
                       final letterData = _lettersData[index];
+                      final bool isLocked = !isPremium && index >= unlockedCount;
 
                       return LessonCircleButton(
                         letterData: letterData,
+                        isLocked: isLocked,
                         onTap: () async {
+                          if (isLocked) {
+                            _showPaywallDialog(context);
+                            return;
+                          }
+
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => DetailScreen(
                                 letterData: letterData,
-                                // CHANGED - Передаем полный массив уроков для работы с PageView
-                                allLetters: _lettersData, 
-                                // CHANGED - Передаем текущий индекс выбранного урока
-                                currentIndex: index,      
+                                allLetters: _lettersData,
+                                currentIndex: index,
                               ),
                             ),
                           );
-                          // Обновляем экран после возвращения из теста, чтобы индикатор перерисовался
+                          if (!mounted) return;
                           setState(() {});
                         },
                       );
@@ -111,11 +171,13 @@ Future<void> _loadJsonData() async {
 
 class LessonCircleButton extends StatelessWidget {
   final LetterModel letterData;
+  final bool isLocked;
   final VoidCallback onTap;
 
   const LessonCircleButton({
     super.key,
     required this.letterData,
+    this.isLocked = false,
     required this.onTap,
   });
 
@@ -124,41 +186,55 @@ class LessonCircleButton extends StatelessWidget {
     return FutureBuilder<double>(
       future: SettingsService.instance.getLessonProgress(letterData.id),
       builder: (context, snapshot) {
-        double progress = snapshot.data ?? 0.0; // Процент прохождения (от 0.0 до 1.0)
+        double progress = snapshot.data ?? 0.0;
 
         return GestureDetector(
           onTap: onTap,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // МОЩНЫЙ КРУГОВОЙ ИНДИКАТОР ПРОГРЕССА ВОКРУГ КНОПКИ УРОКА
               SizedBox.expand(
                 child: CircularProgressIndicator(
-                  value: progress,
+                  value: isLocked ? 0.0 : progress,
                   strokeWidth: 5,
-                  backgroundColor: Colors.teal.shade100,
-                  color: Colors.teal.shade700,
+                  backgroundColor: isLocked ? Colors.grey.shade300 : Colors.teal.shade100,
+                  color: isLocked ? Colors.grey : Colors.teal.shade700,
                 ),
               ),
-              // Сама кнопка с буквой
               Container(
                 margin: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.teal.shade50,
-                  border: Border.all(color: Colors.teal.shade300, width: 1.5),
+                  color: isLocked ? Colors.grey.shade200 : Colors.teal.shade50,
+                  border: Border.all(
+                    color: isLocked ? Colors.grey.shade400 : Colors.teal.shade300,
+                    width: 1.5,
+                  ),
                 ),
                 child: Center(
-                  child: Text(
-                    letterData.variations.isNotEmpty 
-                        ? letterData.variations.first.symbol 
-                        : '${letterData.id}',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal.shade900,
-                    ),
-                  ),
+                  child: isLocked
+                      ? Icon(
+                          Icons.lock,
+                          size: 32,
+                          color: Colors.grey.shade600,
+                        )
+                      : FractionallySizedBox(
+                          widthFactor: 0.8,
+                          heightFactor: 0.8,
+                          child: FittedBox(
+                            fit: BoxFit.contain,
+                            child: Text(
+                              letterData.variations.isNotEmpty
+                                  ? letterData.variations.first.symbol
+                                  : '${letterData.id}',
+                              style: TextStyle(
+                                fontSize: 72,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.teal.shade900,
+                              ),
+                            ),
+                          ),
+                        ),
                 ),
               ),
             ],

@@ -1,0 +1,43 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'services/analytics_service.dart';
+import 'screens/home_screen.dart';
+import 'screens/lesson_screen.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Инициализация Firebase
+  await Firebase.initializeApp(
+    // Если используете flutterfire configure, расскоментируйте строчку ниже:
+    // options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final analyticsService = AnalyticsService();
+
+    return MaterialApp(
+      title: 'Flutter App with Analytics',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
+      // Передаем observer для автоматического логирования переходов между экранами
+      navigatorObservers: [
+        analyticsService.analyticsObserver,
+      ],
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const HomeScreen(),
+        '/lesson': (context) => const LessonScreen(),
+      },
+    );
+  }
+}

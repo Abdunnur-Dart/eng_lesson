@@ -61,12 +61,13 @@ class _DetailScreenState extends State<DetailScreen> {
     final variations = letter.variations;
     final totalItems = variations.isNotEmpty ? variations.length : 1;
     final appBarTitle = 'Урок № ${letter.id}: ${letter.title}';
+    final isDark = Theme.of(context).brightness == Brightness.dark; // NEW - Проверка тёмной темы
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: isDark ? Theme.of(context).scaffoldBackgroundColor : Colors.grey.shade50, // CHANGED - Адаптивный фон
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.teal.shade800,
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.teal.shade800, // CHANGED - Динамический цвет AppBar
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -170,6 +171,8 @@ class _PageIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark; // NEW - Проверка тёмной темы
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
       child: Row(
@@ -183,8 +186,8 @@ class _PageIndicator extends StatelessWidget {
             width: currentIndex == index ? 24.0 : 8.0,
             decoration: BoxDecoration(
               color: currentIndex == index
-                  ? Colors.teal.shade800
-                  : Colors.teal.shade200,
+                  ? (isDark ? Colors.tealAccent.shade700 : Colors.teal.shade800) // CHANGED - Цвета индикатора
+                  : (isDark ? Colors.grey.shade800 : Colors.teal.shade200), // CHANGED
               borderRadius: BorderRadius.circular(4.0),
             ),
           ),
@@ -205,29 +208,31 @@ class _SymbolCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark; // NEW - Проверка тёмной темы
+
     return Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 400),
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 24.0),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white, // CHANGED - Динамический цвет карточки
           borderRadius: BorderRadius.circular(24.0),
           boxShadow: [
             BoxShadow(
-              color: Colors.teal.shade900.withOpacity(0.08),
+              color: isDark ? Colors.black.withOpacity(0.3) : Colors.teal.shade900.withOpacity(0.08), // CHANGED - Тень
               blurRadius: 20,
               spreadRadius: 2,
               offset: const Offset(0, 8),
             ),
           ],
           border: Border.all(
-            color: Colors.teal.shade100,
+            color: isDark ? const Color(0xFF2C2C2C) : Colors.teal.shade100, // CHANGED - Граница карточки
             width: 1.5,
           ),
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize .min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             FittedBox(
@@ -237,7 +242,7 @@ class _SymbolCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 120,
                   fontWeight: FontWeight.w400,
-                  color: Colors.teal.shade900,
+                  color: isDark ? Colors.tealAccent.shade200 : Colors.teal.shade900, // CHANGED - Цвет символа
                 ),
               ),
             ),
@@ -246,7 +251,7 @@ class _SymbolCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.teal.shade50,
+                  color: isDark ? const Color(0xFF2A2A2A) : Colors.teal.shade50, // CHANGED - Фон транскрипции
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -255,7 +260,7 @@ class _SymbolCard extends StatelessWidget {
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.5,
-                    color: Colors.teal.shade800,
+                    color: isDark ? Colors.tealAccent.shade400 : Colors.teal.shade800, // CHANGED - Текст транскрипции
                   ),
                 ),
               ),
@@ -273,14 +278,16 @@ class _DescriptionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark; // NEW - Проверка тёмной темы
+
     return Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 400),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white, // CHANGED - Цвет карточки описания
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.teal.shade100),
+          border: Border.all(color: isDark ? const Color(0xFF2C2C2C) : Colors.teal.shade100), // CHANGED - Граница
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,7 +297,7 @@ class _DescriptionSection extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: Colors.teal.shade900,
+                color: isDark ? Colors.tealAccent.shade200 : Colors.teal.shade900, // CHANGED - Заголовок описания
               ),
             ),
             const SizedBox(height: 8),
@@ -298,7 +305,7 @@ class _DescriptionSection extends StatelessWidget {
               description,
               style: TextStyle(
                 fontSize: 15,
-                color: Colors.grey.shade700,
+                color: isDark ? Colors.grey.shade300 : Colors.grey.shade700, // CHANGED - Текст описания
                 height: 1.4,
               ),
             ),
@@ -324,13 +331,15 @@ class _BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark; // NEW - Проверка тёмной темы
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white, // CHANGED - Цвет нижней панели
         boxShadow: [
           BoxShadow(
-            color: Colors.teal.shade900.withOpacity(0.06),
+            color: isDark ? Colors.black.withOpacity(0.4) : Colors.teal.shade900.withOpacity(0.06), // CHANGED - Тень
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -345,10 +354,10 @@ class _BottomNavBar extends StatelessWidget {
               onPressed: currentIndex > 0 ? onPrevious : null,
               style: ElevatedButton.styleFrom(
                 elevation: 0,
-                backgroundColor: Colors.teal.shade50,
-                foregroundColor: Colors.teal.shade800,
-                disabledBackgroundColor: Colors.grey.shade100,
-                disabledForegroundColor: Colors.grey.shade400,
+                backgroundColor: isDark ? const Color(0xFF2A2A2A) : Colors.teal.shade50, // CHANGED - Кнопка Назад
+                foregroundColor: isDark ? Colors.tealAccent.shade400 : Colors.teal.shade800, // CHANGED
+                disabledBackgroundColor: isDark ? const Color(0xFF181818) : Colors.grey.shade100, // CHANGED
+                disabledForegroundColor: isDark ? Colors.grey.shade700 : Colors.grey.shade400, // CHANGED
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -366,10 +375,10 @@ class _BottomNavBar extends StatelessWidget {
               onPressed: currentIndex < totalItems - 1 ? onNext : null,
               style: ElevatedButton.styleFrom(
                 elevation: 0,
-                backgroundColor: Colors.teal.shade800,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: Colors.grey.shade100,
-                disabledForegroundColor: Colors.grey.shade400,
+                backgroundColor: isDark ? Colors.tealAccent.shade700 : Colors.teal.shade800, // CHANGED - Кнопка Далее
+                foregroundColor: isDark ? Colors.black : Colors.white, // CHANGED
+                disabledBackgroundColor: isDark ? const Color(0xFF181818) : Colors.grey.shade100, // CHANGED
+                disabledForegroundColor: isDark ? Colors.grey.shade700 : Colors.grey.shade400, // CHANGED
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
