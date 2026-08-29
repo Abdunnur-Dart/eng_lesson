@@ -103,7 +103,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     Icon(Icons.quiz_outlined, size: 64, color: Colors.grey.shade400),
                     const SizedBox(height: 16),
                     Text(
-                      'Вопросы для этого урока пока не добавлены.',
+                      'Вопросы для этого урока пока не добавлены. скоро появятся!',
                       style: TextStyle(fontSize: 16, color: Colors.grey.shade700, fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
