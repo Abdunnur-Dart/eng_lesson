@@ -149,7 +149,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
       return;
     }
 
-    await Navigator.push<void>( // CHANGED - Переход без ожидания bool ответа
+    final dynamic paymentResult = await Navigator.push<dynamic>( // CHANGED - Ожидаем результат от PaymentWebViewScreen
       context,
       MaterialPageRoute(
         builder: (context) => PaymentWebViewScreen(
@@ -161,8 +161,10 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
 
     if (!mounted) return;
 
-    // После закрытия экрана всегда ждём подтверждения Firestore Webhook // CHANGED
-    await _showActivationDialogAndWait(user.uid); // CHANGED
+    // Ждем активации через Firestore Webhook только если платеж был завершен // CHANGED
+    if (paymentResult == true) { // CHANGED
+      await _showActivationDialogAndWait(user.uid); // CHANGED
+    } // NEW
   }
 
   Future<void> _showActivationDialogAndWait(String userId) async {

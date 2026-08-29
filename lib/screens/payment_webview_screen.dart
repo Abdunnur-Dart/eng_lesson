@@ -42,9 +42,9 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           onNavigationRequest: (NavigationRequest request) {
             final Uri parsedUri = Uri.parse(request.url); // NEW
 
-            // Редирект успешного завершения -> Закрываем экран // NEW
+            // Редирект успешного завершения -> Закрываем экран с успешным флагом // CHANGED
             if (request.url.contains('yookassaproj201514.vercel.app') || request.url.contains('success')) { // CHANGED
-              Navigator.of(context).pop(); // CHANGED - Закрытие без передачи результата на клиент
+              Navigator.of(context).pop(true); // CHANGED - Возвращаем true только при редиректе успеха
               return NavigationDecision.prevent; // CHANGED
             }
 
