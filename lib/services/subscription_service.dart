@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // NEW
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class SubscriptionService {
   // Укажи точную ссылку на эндпоинт Vercel
-  static const String _vercelApiUrl = 'https://yookassaproj201514.vercel.app/api/create-payment';
+  static const String _vercelApiUrl = 'https://yookassaproj201514.vercel.app/api/create-payment.js';
 
   /// Безопасное создание платежа через сервер Vercel
   Future<String?> createOneTimePayment({
@@ -13,9 +14,15 @@ class SubscriptionService {
     required String productId,
   }) async {
     try {
+      final User? currentUser = FirebaseAuth.instance.currentUser; // NEW
+      final String? idToken = await currentUser?.getIdToken(); // NEW
+
       final response = await http.post(
         Uri.parse(_vercelApiUrl),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          if (idToken != null) 'Authorization': 'Bearer $idToken', // NEW - Защита токеном
+        },
         body: jsonEncode({
           'userId': userId,
           'productId': productId,
@@ -66,26 +73,26 @@ class SubscriptionService {
     return null;
   }
 
-  /// Ожидание активации доступа через Firestore Stream (Webhook от бэкенда) // CHANGED
-  Future<bool> waitForLifetimeActivation(String userId) async { // CHANGED
-    final docRef = FirebaseFirestore.instance.collection('users').doc(userId); // CHANGED
+  /// Ожидание активации доступа через Firestore Stream (Webhook от бэкенда)
+  Future<bool> waitForLifetimeActivation(String userId) async {
+    final docRef = FirebaseFirestore.instance.collection('users').doc(userId);
 
-    try { // NEW
-      // Безопасное ожидание события от сервера (через Webhook ЮKassa -> Vercel -> Firestore) // NEW
-      final snapshot = await docRef.snapshots().firstWhere( // CHANGED
-        (snap) { // NEW
-          if (!snap.exists) return false; // NEW
-          final data = snap.data(); // NEW
-          return isDataPremiumActive(data); // NEW
-        }, // NEW
-      ).timeout(const Duration(seconds: 30)); // NEW
+    try {
+      // Безопасное ожидание события от сервера (через Webhook ЮKassa -> Vercel -> Firestore)
+      final snapshot = await docRef.snapshots().firstWhere(
+        (snap) {
+          if (!snap.exists) return false;
+          final data = snap.data();
+          return isDataPremiumActive(data);
+        },
+      ).timeout(const Duration(seconds: 30));
 
-      return snapshot.exists && isDataPremiumActive(snapshot.data()); // CHANGED
-    } catch (e) { // NEW
-      // Таймаут ожидания Webhook или ошибка сети // NEW
-      debugPrint('Таймаут или ошибка ожидания обновления премиума: $e'); // NEW
-      return false; // CHANGED
-    } // NEW
+      return snapshot.exists && isDataPremiumActive(snapshot.data());
+    } catch (e) {
+      // Таймаут ожидания Webhook или ошибка сети
+      debugPrint('Таймаут или ошибка ожидания обновления премиума: $e');
+      return false;
+    }
   }
 
   /// Проверка статуса на сервере

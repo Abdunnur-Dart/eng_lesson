@@ -19,6 +19,13 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
 
+  // Белый список разрешенных хостов // NEW
+  final List<String> _allowedHosts = [ // NEW
+    'yookassa.ru', // NEW
+    'yoomoney.ru', // NEW
+    'yookassaproj201514.vercel.app', // NEW
+  ]; // NEW
+
   @override
   void initState() {
     super.initState();
@@ -33,12 +40,21 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
             setState(() => _isLoading = false);
           },
           onNavigationRequest: (NavigationRequest request) {
-            // Перехват успеха для закрытия экранов
-            if (request.url.contains('success') || request.url.contains('yookassaproj201514')) {
-              Navigator.of(context).pop(true);
-              return NavigationDecision.prevent;
+            final Uri parsedUri = Uri.parse(request.url); // NEW
+
+            // Редирект успешного завершения -> Закрываем экран // NEW
+            if (request.url.contains('yookassaproj201514.vercel.app') || request.url.contains('success')) { // CHANGED
+              Navigator.of(context).pop(); // CHANGED - Закрытие без передачи результата на клиент
+              return NavigationDecision.prevent; // CHANGED
             }
-            return NavigationDecision.navigate;
+
+            // Валидация доменов // NEW
+            final bool isAllowedHost = _allowedHosts.any((host) => parsedUri.host.endsWith(host)); // NEW
+            if (isAllowedHost || parsedUri.scheme == 'about') { // NEW
+              return NavigationDecision.navigate; // NEW
+            } // NEW
+
+            return NavigationDecision.prevent; // CHANGED
           },
         ),
       )

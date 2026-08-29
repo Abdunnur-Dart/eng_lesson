@@ -7,7 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../services/auth_service.dart';
 import '../services/subscription_service.dart';
-import '../services/analytics_service.dart'; // NEW
+import '../services/analytics_service.dart';
 import 'payment_webview_screen.dart';
 
 class AuthPaymentScreen extends StatefulWidget {
@@ -29,11 +29,11 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
   Duration _remainingTime = Duration.zero;
   bool _isCancelling = false;
 
-  @override // NEW
-  void initState() { // NEW
-    super.initState(); // NEW
-    AnalyticsService.instance.logScreenView(screenName: 'AuthPaymentScreen'); // NEW
-  } // NEW
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logScreenView(screenName: 'AuthPaymentScreen');
+  }
 
   @override
   void dispose() {
@@ -86,15 +86,15 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
     setState(() => _isLoading = true);
     String? error;
 
-    try { // NEW
+    try {
       if (_isLogin) {
         error = await AuthService.instance.signInWithEmail(email, password);
       } else {
         error = await AuthService.instance.registerWithEmail(email, password);
       }
-    } finally { // NEW
-      _passwordController.clear(); // NEW - очищаем чувствительные данные из памяти контроллера сразу после запроса
-    } // NEW
+    } finally {
+      _passwordController.clear();
+    }
 
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -104,7 +104,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
         SnackBar(content: Text(error)),
       );
     } else {
-      _emailController.clear(); // NEW - очищаем email при успешной авторизации
+      _emailController.clear();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_isLogin ? 'Успешный вход!' : 'Регистрация успешна!'),
@@ -118,10 +118,10 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
     if (!mounted) return;
     setState(() => _isPaymentLoading = true);
 
-    AnalyticsService.instance.logEvent( // NEW
-      name: 'begin_checkout', // NEW
-      parameters: {'product_id': 'lifetime_access', 'price': 499.0}, // NEW
-    ); // NEW
+    AnalyticsService.instance.logEvent(
+      name: 'begin_checkout',
+      parameters: {'product_id': 'lifetime_access', 'price': 499.0},
+    );
 
     final confirmationUrl = await _subscriptionService.createOneTimePayment(
       userId: user.uid,
@@ -149,7 +149,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
       return;
     }
 
-    final bool? result = await Navigator.push<bool>(
+    await Navigator.push<void>( // CHANGED - Переход без ожидания bool ответа
       context,
       MaterialPageRoute(
         builder: (context) => PaymentWebViewScreen(
@@ -161,9 +161,8 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
 
     if (!mounted) return;
 
-    if (result == true) {
-      await _showActivationDialogAndWait(user.uid);
-    }
+    // После закрытия экрана всегда ждём подтверждения Firestore Webhook // CHANGED
+    await _showActivationDialogAndWait(user.uid); // CHANGED
   }
 
   Future<void> _showActivationDialogAndWait(String userId) async {
@@ -189,13 +188,13 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
 
     Navigator.of(context, rootNavigator: true).pop();
 
-    if (activated) { // NEW
-      AnalyticsService.instance.logPurchase( // NEW
-        productId: 'lifetime_access', // NEW
-        price: 499.00, // NEW
-        currency: 'RUB', // NEW
-      ); // NEW
-    } // NEW
+    if (activated) {
+      AnalyticsService.instance.logPurchase(
+        productId: 'lifetime_access',
+        price: 499.00,
+        currency: 'RUB',
+      );
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -438,16 +437,16 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
                       side: BorderSide(color: isPremium ? Colors.green : Colors.red),
                       avatar: Icon(
                         isPremium ? Icons.check_circle_rounded : Icons.cancel_rounded,
-                        color: isPremium ? Colors.greenAccent : Colors.redAccent,
+                        color: isPremium ? const Color.fromARGB(255, 9, 153, 83) : Colors.redAccent,
                         size: 18,
                       ),
                       label: Text(
                         isPremium
-                            ? (isLifetime ? 'Бессрочный Премиум 🚀' : 'Премиум Активен 🎉')
+                            ? (isLifetime ? 'Бессрочный Премиум ' : 'Премиум Активен 🎉')
                             : 'Доступ ограничен',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: isPremium ? Colors.greenAccent : Colors.redAccent,
+                          color: isPremium ? const Color.fromARGB(255, 6, 173, 92) : Colors.redAccent,
                         ),
                       ),
                     ),

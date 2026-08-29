@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'services/settings_service.dart';
 import 'services/analytics_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // CHANGED: Проверяем, не инициализирован ли Firebase уже в JS-контексте
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
   }
+
+  // Настройка устойчивости Firestore для WayDroid / устройств без GMS
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
 
   runApp(const MyApp());
 }
@@ -30,8 +37,8 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           title: 'Арабские буквы',
           navigatorObservers: [
-        AnalyticsService.instance.observer, // NEW - Автоматическое отслеживание экранов
-      ],
+            AnalyticsService.instance.observer,
+          ],
           debugShowCheckedModeBanner: false,
           themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
           theme: ThemeData(
@@ -42,7 +49,7 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.light,
             ),
             scaffoldBackgroundColor: const Color(0xFFF8FAF9),
-            // CHANGED: Исправлена ошибка типов (используем CardThemeData вместо CardTheme)
+            // Использование CardThemeData для Flutter 3.22+
             cardTheme: CardThemeData(
               color: Colors.white,
               elevation: 0,
@@ -62,7 +69,7 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.dark,
               surface: const Color(0xFF1E1E1E),
             ),
-            // CHANGED: Исправлена ошибка типов (используем CardThemeData вместо CardTheme)
+            // Использование CardThemeData для Flutter 3.22+
             cardTheme: CardThemeData(
               color: const Color(0xFF1E1E1E),
               elevation: 0,

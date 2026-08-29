@@ -7,7 +7,26 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1008887512826:android:7d1bf1e469cf1eae5f9343",
+        "mobilesdk_app_id": "1:1008887512826:android:c4cb4edf17ad7a645f9343",
+        "android_client_info": {
+          "package_name": "com.abdteam.arabicmu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXr68Y7BQ2kEeCMI7I5nCCx-4pNCumzDo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1008887512826:android:f8177bcb260fe73c5f9343",
         "android_client_info": {
           "package_name": "com.abdteam.muali"
         }

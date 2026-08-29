@@ -1,4 +1,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+   
+    <!-- Единый блок queries, содержащий оба запроса -->
+    <queries>
+        <!-- Для открытия почтового клиента (mailto) -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
+        
+        <!-- Стандартный запрос Flutter для обработки текста -->
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+    </queries>
+
     <application
         android:label="арабские буквы"
         android:name="${applicationName}"
@@ -20,7 +36,7 @@
               android:resource="@style/NormalTheme"
             />
 
-            <!-- 1. Фильтр запуска приложения (исправлен) -->
+            <!-- 1. Фильтр запуска приложения -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -43,10 +59,4 @@
             android:value="2" />
     </application>
 
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
-        </intent>
-    </queries>
 </manifest>
