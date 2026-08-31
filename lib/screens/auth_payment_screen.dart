@@ -120,7 +120,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
 
     AnalyticsService.instance.logEvent(
       name: 'begin_checkout',
-      parameters: {'product_id': 'lifetime_access', 'price': 499.0},
+      parameters: {'product_id': 'lifetime_access', 'price': 35.0},
     );
 
     final confirmationUrl = await _subscriptionService.createOneTimePayment(
@@ -193,7 +193,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
     if (activated) {
       AnalyticsService.instance.logPurchase(
         productId: 'lifetime_access',
-        price: 499.00,
+        price: 35.00,
         currency: 'RUB',
       );
     }
@@ -528,7 +528,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
                                 ),
                                 onPressed: () => _openOneTimePaymentPage(user),
                                 child: const Text(
-                                  'Купить навсегда за 499 ₽',
+                                  'Купить навсегда за 35 ₽',
                                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
                               ),

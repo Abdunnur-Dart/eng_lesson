@@ -285,7 +285,7 @@ Card(
 ListTile(
   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
   title: const Text('Служба поддержки', style: TextStyle(fontWeight: FontWeight.w600)),
-  subtitle: const Text('Чат с разработчиком в реальном времени'),
+  subtitle: const Text('Чат с поддержкой'),
   leading: Container(
     padding: const EdgeInsets.all(8),
     decoration: BoxDecoration(
