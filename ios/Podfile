@@ -31,8 +31,8 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  flutter_install_ios_engine_pod __FILE__
-  flutter_install_plugin_pods __FILE__
+  flutter_install_ios_engine_pod File.dirname(File.realpath(__FILE__))
+  flutter_install_plugin_pods File.dirname(File.realpath(__FILE__))
 end
 
 post_install do |installer|
