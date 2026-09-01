@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:gravity="center">
+
+    <!-- Верхняя панель: Заголовок и процент выполнения -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Урок"
+            android:textColor="#9E9E9E"
+            android:textSize="12sp" />
+
+        <!-- NEW: Процент сдачи урока -->
+        <TextView
+            android:id="@+id/widget_progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0%"
+            android:textColor="#00BFA5"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Основной символ буквы -->
+    <TextView
+        android:id="@+id/widget_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="..."
+        android:textColor="#00BFA5"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:layout_marginTop="2dp" />
+
+    <!-- NEW: Варианты написания буквы (изолированная, начальная, срединная, конечная) -->
+    <TextView
+        android:id="@+id/widget_variations"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:layout_marginTop="4dp" />
+</LinearLayout>

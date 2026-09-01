@@ -1,5 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
    
+    <!-- Разрешение на показ пуш-уведомлений (для Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <!-- Единый блок queries, содержащий оба запроса -->
     <queries>
         <!-- Для открытия почтового клиента (mailto) -->
@@ -20,6 +23,11 @@
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         
+        <!-- Настройка дефолтного канала для Firebase Messaging -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="high_importance_channel" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -52,6 +60,18 @@
                 <data android:scheme="muallimsani" android:host="success" />
             </intent-filter>
         </activity>
+
+        <!-- NEW: Регистрация провайдера виджета -->
+        <receiver
+            android:name=".AppWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/app_widget_info" />
+        </receiver>
 
         <!-- Не удаляйте эту мета-информацию, она нужна Flutter -->
         <meta-data
