@@ -1,10 +1,193 @@
-5555 5555 5555 4543
-5555 5555 5555 4568
-5555 5555 5555 4527
-5555 5555 5555 4600
-5555 5555 5555 4518
-5555 5555 5555 4626
-5555 5555 5555 4501
-5555 5555 5555 4576
-5555 5555 5555 4550
-5555 5555 5555 4447
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/subscription_service.dart';
+
+class AuthPaymentScreen extends StatefulWidget {
+  const AuthPaymentScreen({Key? key}) : super(key: key);
+
+  @override
+  State<AuthPaymentScreen> createState() => _AuthPaymentScreenState();
+}
+
+class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
+  bool _isLoading = false;
+
+  Future<void> _handlePayment(String productId) async {
+    setState(() => _isLoading = true);
+
+    try {
+      await SubscriptionService.createPayment(productId);
+    } catch (e) {
+      // Защита от использования BuildContext после async (убирает Don't use BuildContext across async gaps)
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка оплаты: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Авторизация')),
+        body: const Center(
+          child: Text('Пожалуйста, войдите в аккаунт'),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Подписка и Оплата'),
+        centerTitle: true,
+      ),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('Ошибка загрузки: ${snapshot.error}'),
+            );
+          }
+
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(
+              child: Text('Данные пользователя не найдены.'),
+            );
+          }
+
+          final userData = snapshot.data!.data() as Map<String, dynamic>?;
+          final bool isPremium = userData?['isPremium'] ?? false;
+          final bool isLifetime = userData?['isLifetime'] ?? false;
+          final Timestamp? expiresAtTimestamp = userData?['expiresAt'] as Timestamp?;
+
+          if (isPremium) {
+            return _buildActiveSubscriptionView(
+              isLifetime: isLifetime,
+              expiresAt: expiresAtTimestamp?.toDate(),
+            );
+          } else {
+            return _buildPaywallView();
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildActiveSubscriptionView({
+    required bool isLifetime,
+    DateTime? expiresAt,
+  }) {
+    String formattedDate = 'Неограниченно';
+    
+    if (!isLifetime && expiresAt != null) {
+      formattedDate = '${expiresAt.day.toString().padLeft(2, '0')}.'
+          '${expiresAt.month.toString().padLeft(2, '0')}.'
+          '${expiresAt.year}';
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.check_circle_outline,
+              color: Colors.green,
+              size: 80,
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Подписка активна',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isLifetime
+                  ? 'У вас активирован доступ Навсегда'
+                  : 'Срок действия до: $formattedDate',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('На главную'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaywallView() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Icon(Icons.star_border, color: Colors.amber, size: 80),
+          const SizedBox(height: 16),
+          const Text(
+            'Выберите тариф',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 24),
+          Card(
+            child: ListTile(
+              title: const Text('Подписка на 1 месяц'),
+              subtitle: const Text('199 ₽ / мес'),
+              trailing: ElevatedButton(
+                onPressed: _isLoading ? null : () => _handlePayment('sub_1_month'),
+                child: const Text('Купить'),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              title: const Text('Подписка на 1 год'),
+              subtitle: const Text('1990 ₽ / год'),
+              trailing: ElevatedButton(
+                onPressed: _isLoading ? null : () => _handlePayment('sub_1_year'),
+                child: const Text('Купить'),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              title: const Text('Доступ Навсегда'),
+              subtitle: const Text('Разовый платеж'),
+              trailing: ElevatedButton(
+                onPressed: _isLoading ? null : () => _handlePayment('lifetime_access'),
+                child: const Text('Купить'),
+              ),
+            ),
+          ),
+          if (_isLoading) ...[
+            const SizedBox(height: 24),
+            const Center(child: CircularProgressIndicator()),
+          ],
+        ],
+      ),
+    );
+  }
+}

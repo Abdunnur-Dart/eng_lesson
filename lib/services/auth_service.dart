@@ -1,21 +1,21 @@
-import 'package:firebase_auth/firebase_auth.dart'; // NEW
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'settings_service.dart';
-import 'analytics_service.dart'; // NEW
+import 'analytics_service.dart';
 
 class AuthService extends ChangeNotifier {
   static final AuthService instance = AuthService._init();
   
-  AuthService._init() { // CHANGED
-    _auth.authStateChanges().listen((user) { // CHANGED
-      if (user != null) { // NEW
-        AnalyticsService.instance.setUserId(user.uid); // NEW
-      } else { // NEW
-        AnalyticsService.instance.setUserId(null); // NEW
-      } // NEW
-      notifyListeners(); // NEW
-    }); // NEW
+  AuthService._init() {
+    _auth.authStateChanges().listen((user) {
+      if (user != null) {
+        AnalyticsService.instance.setUserId(user.uid);
+      } else {
+        AnalyticsService.instance.setUserId(null);
+      }
+      notifyListeners();
+    });
   }
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -23,64 +23,99 @@ class AuthService extends ChangeNotifier {
 
   User? get currentUser => _auth.currentUser;
 
+  /// Вход по Email и Паролю
   Future<String?> signInWithEmail(String email, String password) async {
     try {
-      await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      await AnalyticsService.instance.logLogin(method: 'email'); // NEW
-      notifyListeners();
-      return null; // Ошибок нет
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      return null;
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'invalid-credential' || e.code == 'wrong-password' || e.code == 'user-not-found') {
-        return 'Неверный email или пароль.';
-      } else if (e.code == 'user-disabled') {
-        return 'Учетная запись заблокирована.';
-      } else if (e.code == 'invalid-email') {
-        return 'Некорректный формат email.';
-      }
       return e.message ?? 'Ошибка авторизации.';
     } catch (e) {
-      return 'Произошла непредвиденная ошибка.';
+      return 'Не удалось войти. Проверьте введенные данные.';
     }
   }
 
+  /// Регистрация по Email и Паролю
   Future<String?> registerWithEmail(String email, String password) async {
     try {
-      UserCredential credential = await _auth.createUserWithEmailAndPassword(
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      if (credential.user != null) {
-        await _firestore.collection('users').doc(credential.user!.uid).set({
+      if (userCredential.user != null) {
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
           'email': email,
           'createdAt': FieldValue.serverTimestamp(),
           'isPremium': false,
         }, SetOptions(merge: true));
-        await AnalyticsService.instance.setUserId(credential.user!.uid); // NEW
-        await AnalyticsService.instance.logSignUp(method: 'email'); // NEW
       }
 
-      notifyListeners();
-      return null; // Ошибок нет
+      return null;
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'email-already-in-use') {
-        return 'Пользователь с таким email уже существует.';
-      } else if (e.code == 'weak-password') {
-        return 'Пароль слишком простой (минимум 6 символов).';
-      }
       return e.message ?? 'Ошибка регистрации.';
     } catch (e) {
-      return 'Произошла непредвиденная ошибка.';
+      return 'Не удалось зарегистрировать пользователя.';
     }
   }
 
+  /// Авторизация через Google
+  Future<String?> signInWithGoogle() async {
+    try {
+      GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      UserCredential userCredential = await _auth.signInWithProvider(googleProvider);
+
+      if (userCredential.user != null) {
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'email': userCredential.user!.email,
+          'createdAt': FieldValue.serverTimestamp(),
+          'isPremium': false,
+        }, SetOptions(merge: true));
+
+        await AnalyticsService.instance.setUserId(userCredential.user!.uid);
+        await AnalyticsService.instance.logLogin(method: 'google');
+      }
+
+      notifyListeners();
+      return null;
+    } on FirebaseAuthException catch (e) {
+      return e.message ?? 'Ошибка авторизации Firebase.';
+    } catch (e) {
+      return 'Неудачная попытка входа через Google.';
+    }
+  }
+
+  /// Авторизация через GitHub
+  Future<String?> signInWithGithub() async {
+    try {
+      GithubAuthProvider githubProvider = GithubAuthProvider();
+      UserCredential userCredential = await _auth.signInWithProvider(githubProvider);
+
+      if (userCredential.user != null) {
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'email': userCredential.user!.email,
+          'createdAt': FieldValue.serverTimestamp(),
+          'isPremium': false,
+        }, SetOptions(merge: true));
+
+        await AnalyticsService.instance.setUserId(userCredential.user!.uid);
+        await AnalyticsService.instance.logLogin(method: 'github');
+      }
+
+      notifyListeners();
+      return null;
+    } on FirebaseAuthException catch (e) {
+      return e.message ?? 'Ошибка авторизации через GitHub.';
+    } catch (e) {
+      return 'Неудачная попытка входа через GitHub.';
+    }
+  }
+
+  /// Выход из системы
   Future<void> signOut() async {
     await _auth.signOut();
     await SettingsService.instance.clearUserDataOnSignOut();
-    await AnalyticsService.instance.setUserId(null); // NEW
+    await AnalyticsService.instance.setUserId(null);
     notifyListeners();
   }
 }

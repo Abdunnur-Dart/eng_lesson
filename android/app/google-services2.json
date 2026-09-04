@@ -12,12 +12,7 @@
           "package_name": "com.abdteam.arabicmu"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "1008887512826-qj0o9oq7fikks5j4vlev4eedt8enmi7u.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
           "current_key": "AIzaSyBXr68Y7BQ2kEeCMI7I5nCCx-4pNCumzDo"
@@ -25,12 +20,7 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1008887512826-qj0o9oq7fikks5j4vlev4eedt8enmi7u.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     },
@@ -41,12 +31,7 @@
           "package_name": "com.abdteam.muali"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "1008887512826-qj0o9oq7fikks5j4vlev4eedt8enmi7u.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
           "current_key": "AIzaSyBXr68Y7BQ2kEeCMI7I5nCCx-4pNCumzDo"
@@ -54,12 +39,7 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1008887512826-qj0o9oq7fikks5j4vlev4eedt8enmi7u.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

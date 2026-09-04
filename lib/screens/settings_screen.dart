@@ -12,6 +12,86 @@ class SettingsScreen extends StatelessWidget {
 
   static const String _supportEmail = 'anvistanb17@gmail.com';
 
+  // Виджет баннера уведомления / ошибки из админ-панели
+  Widget _buildAnnouncementBanner(SettingsService settings) {
+    final data = settings.announcementData;
+
+    // Если данных нет или isActive == false — скрываем виджет
+    if (data == null || data['isActive'] != true) {
+      return const SizedBox.shrink();
+    }
+
+    final String title = data['title'] ?? '';
+    final String content = data['htmlContent'] ?? data['content'] ?? '';
+    final String badgeColor = data['badgeColor'] ?? 'yellow';
+
+    // Определяем цветовую схему на основе выбора в HTML ('red' или 'yellow')
+    final isRed = badgeColor == 'red';
+
+    final Color backgroundColor = isRed
+        ? Colors.red.shade900.withAlpha(40)
+        : Colors.amber.shade900.withAlpha(40);
+
+    final Color borderColor = isRed
+        ? Colors.red.shade500.withAlpha(120)
+        : Colors.amber.shade500.withAlpha(120);
+
+    final Color iconAndTitleColor = isRed
+        ? Colors.red.shade300
+        : Colors.amber.shade300;
+
+    final IconData icon = isRed
+        ? Icons.error_outline_rounded
+        : Icons.warning_amber_rounded;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20.0),
+      padding: const EdgeInsets.all(14.0),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 1.5),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            color: iconAndTitleColor,
+            size: 26,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (title.isNotEmpty) ...[
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: iconAndTitleColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                ],
+                if (content.isNotEmpty)
+                  Text(
+                    content,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.35,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // 3-этапная логика открытия поддержки
   Future<void> _handleSupportAction(BuildContext context) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -82,7 +162,7 @@ $systemInfo''';
     }
   }
 
-  // Компактный диалог для планшетов и телефонов (без скролла)
+  // Компактный диалог для планшетов и телефонов
   void _showFallbackSupportModal(BuildContext context, String systemInfo) {
     showDialog(
       context: context,
@@ -327,6 +407,10 @@ $systemInfo''';
               body: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
                 children: [
+                  // 1. БАННЕР ПРЕДУПРЕЖДЕНИЯ / ОШИБКИ ИЗ АДМИНКИ
+                  _buildAnnouncementBanner(settings),
+
+                  // 2. КАРТОЧКА ПРОФИЛЯ И ПОДПИСКИ
                   _buildSectionTitle('АККАУНТ И ПОДПИСКА', context),
                   const SizedBox(height: 8),
                   Card(
@@ -425,6 +509,7 @@ $systemInfo''';
 
                   const SizedBox(height: 24),
 
+                  // 3. СЕКЦИЯ ВНЕШНЕГО ВИДА
                   _buildSectionTitle('ВНЕШНИЙ ВИД', context),
                   const SizedBox(height: 8),
                   Card(
@@ -496,6 +581,7 @@ $systemInfo''';
 
                   const SizedBox(height: 24),
 
+                  // 4. СЕКЦИЯ "О ПРИЛОЖЕНИИ"
                   _buildSectionTitle('О ПРИЛОЖЕНИИ', context),
                   const SizedBox(height: 8),
                   Card(

@@ -1,252 +1,241 @@
-import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-import '../services/auth_service.dart';
+import 'package:flutter/services.dart';
 import '../services/subscription_service.dart';
-import '../services/analytics_service.dart';
-import 'payment_webview_screen.dart';
+import '../services/settings_service.dart';
+import 'dart:convert';
 
 class AuthPaymentScreen extends StatefulWidget {
-  const AuthPaymentScreen({super.key});
+  const AuthPaymentScreen({Key? key}) : super(key: key);
 
   @override
   State<AuthPaymentScreen> createState() => _AuthPaymentScreenState();
 }
 
 class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final SubscriptionService _subscriptionService = SubscriptionService();
-  bool _isLogin = true;
-  bool _isLoading = false;
-  bool _isPaymentLoading = false;
+  static const String _supportEmail = 'anvistanb17@gmail.com';
+  String? _loadingProductId;
 
-  Timer? _countdownTimer;
-  Duration _remainingTime = Duration.zero;
-  bool _isCancelling = false;
-
-  @override
-  void initState() {
-    super.initState();
-    AnalyticsService.instance.logScreenView(screenName: 'AuthPaymentScreen');
-  }
-
-  @override
-  void dispose() {
-    _countdownTimer?.cancel();
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  void _startCountdown(DateTime expiresAt, String userId) {
-    _countdownTimer?.cancel();
-
-    void updateRemaining() {
-      final now = DateTime.now();
-      final difference = expiresAt.difference(now);
-
-      if (difference.isNegative) {
-        _countdownTimer?.cancel();
-        if (mounted) {
-          setState(() {
-            _remainingTime = Duration.zero;
-          });
-          _subscriptionService.checkIsPremiumActive(userId);
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _remainingTime = difference;
-          });
-        }
-      }
-    }
-
-    updateRemaining();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) => updateRemaining());
-  }
-
-  Future<void> _submitAuth() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    if (email.isEmpty || password.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Заполните email и пароль')),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    String? error;
+  Future<void> _handlePayment(String productId) async {
+    setState(() => _loadingProductId = productId);
 
     try {
-      if (_isLogin) {
-        error = await AuthService.instance.signInWithEmail(email, password);
-      } else {
-        error = await AuthService.instance.registerWithEmail(email, password);
-      }
+      await SubscriptionService.createPayment(productId, context);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка оплаты: $e')),
+      );
     } finally {
-      _passwordController.clear();
-    }
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
-    } else {
-      _emailController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isLogin ? 'Успешный вход!' : 'Регистрация успешна!'),
-        ),
-      );
+      if (mounted) {
+        setState(() => _loadingProductId = null);
+      }
     }
   }
 
-  /// Открытие оплаты разовой покупки
-  Future<void> _openOneTimePaymentPage(User user) async {
-    if (!mounted) return;
-    setState(() => _isPaymentLoading = true);
-
-    AnalyticsService.instance.logEvent(
-      name: 'begin_checkout',
-      parameters: {'product_id': 'lifetime_access', 'price': 35.0},
-    );
-
-    final confirmationUrl = await _subscriptionService.createOneTimePayment(
-      userId: user.uid,
-      productId: 'lifetime_access',
-    );
-
-    if (!mounted) return;
-    setState(() => _isPaymentLoading = false);
-
-    if (confirmationUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ошибка формирования счета для оплаты')),
-      );
-      return;
-    }
-
-    if (kIsWeb) {
-      final Uri url = Uri.parse(confirmationUrl);
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-        
-        if (!mounted) return;
-        await _showActivationDialogAndWait(user.uid);
-      }
-      return;
-    }
-
-    final dynamic paymentResult = await Navigator.push<dynamic>( // CHANGED - Ожидаем результат от PaymentWebViewScreen
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentWebViewScreen(
-          initialUrl: confirmationUrl,
-          title: 'Разовая покупка',
+  // 1. Сначала показываем предупреждение о возврате
+  void _handleCancelSubscription() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
+            SizedBox(width: 8),
+            Text('Возврат средств'),
+          ],
         ),
+        content: const Text(
+          'Вы действительно хотите отменить подписку и запросить возврат средств?\n\n'
+          'Для оформления возврата потребуется обратиться в службу поддержки.',
+          style: TextStyle(height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Отмена'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(context); // Закрываем предупреждение
+              _showSupportModal();    // Открываем экран поддержки с данными
+            },
+            child: const Text('Продолжить'),
+          ),
+        ],
       ),
     );
-
-    if (!mounted) return;
-
-    // Ждем активации через Firestore Webhook только если платеж был завершен // CHANGED
-    if (paymentResult == true) { // CHANGED
-      await _showActivationDialogAndWait(user.uid); // CHANGED
-    } // NEW
   }
 
-  Future<void> _showActivationDialogAndWait(String userId) async {
-    if (!mounted) return;
+  // 2. Экран поддержки (модальное окно) с системной информацией
+  void _showSupportModal() {
+    final user = FirebaseAuth.instance.currentUser;
+    final userId = user?.uid ?? 'Не авторизован';
+    final userEmail = user?.email ?? 'Не указан';
+
+    final settings = SettingsService.instance;
+    final isPremium = settings.isPremium;
+    final streak = settings.streakCount;
+    final points = settings.totalPoints;
+
+    final String systemInfo = '''
+----------------------------------
+Системная информация:
+• User ID: $userId
+• Email: $userEmail
+• Premium: ${isPremium ? "Да" : "Нет"}
+• Стрик: $streak дней
+• Баллы: $points
+----------------------------------''';
 
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        content: Row(
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 20),
-            Expanded(child: Text('Проверяем статус оплаты и активируем доступ...')),
-          ],
-        ),
-      ),
-    );
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final bool activated = await _subscriptionService.waitForLifetimeActivation(userId);
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 450),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Шапка
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.teal.withAlpha(30),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.mark_email_read_rounded, color: Colors.teal, size: 22),
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'Служба поддержки',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 20),
+                        onPressed: () => Navigator.pop(context),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
 
-    if (!mounted) return;
+                  // E-mail адрес
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.email_outlined, color: Colors.teal, size: 16),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: SelectableText(
+                            _supportEmail,
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy_rounded, size: 16),
+                          tooltip: 'Скопировать E-mail',
+                          onPressed: () {
+                            Clipboard.setData(const ClipboardData(text: _supportEmail));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('E-mail скопирован')),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
 
-    Navigator.of(context, rootNavigator: true).pop();
-
-    if (activated) {
-      AnalyticsService.instance.logPurchase(
-        productId: 'lifetime_access',
-        price: 35.00,
-        currency: 'RUB',
-      );
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          activated
-              ? 'Оплата успешно подтверждена! Премиум активирован 🚀'
-              : 'Платеж обрабатывается. Статус обновится автоматически через пару секунд.',
-        ),
-        backgroundColor: activated ? Colors.green.shade700 : Colors.orange.shade800,
-      ),
-    );
-  }
-
-  Future<void> _handleCancelSubscription(User user) async {
-    if (!mounted) return;
-    setState(() => _isCancelling = true);
-    final success = await _subscriptionService.cancelSubscription(user.uid);
-    if (!mounted) return;
-    setState(() => _isCancelling = false);
-
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Автопродление подписки отключено')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не удалось отключить автопродление')),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, authSnapshot) {
-        final user = authSnapshot.data;
-
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Доступ и Оплата', style: TextStyle(fontWeight: FontWeight.bold)),
-            centerTitle: true,
-            elevation: 0,
-          ),
-          body: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: user == null
-                  ? _buildAuthForm()
-                  : _buildSubscriptionStatus(user),
+                  // Карточка с информацией
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Данные аккаунта для быстрого решения проблемы:',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.tealAccent : Colors.teal.shade800,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            InkWell(
+                              borderRadius: BorderRadius.circular(6),
+                              onTap: () {
+                                Clipboard.setData(ClipboardData(
+                                  text: 'Здравствуйте! Хочу отменить подписку и вернуть средства.\n\n$systemInfo',
+                                ));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Шаблон обращения скопирован')),
+                                );
+                              },
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.copy_rounded, size: 13, color: Colors.teal),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Скопировать',
+                                      style: TextStyle(fontSize: 11, color: Colors.teal, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        SelectableText(
+                          systemInfo,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontFamily: 'monospace',
+                            color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
+                            height: 1.25,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -254,80 +243,131 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
     );
   }
 
-  Widget _buildAuthForm() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Future<Map<String, dynamic>> _fetchRemoteTariffs() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('config')
+          .doc('tariffs')
+          .get();
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade200),
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data() as Map<String, dynamic>;
+        final String jsonString = data['json_data'] ?? '{}';
+        
+        final decodedData = json.decode(jsonString);
+        if (decodedData is Map<String, dynamic>) {
+          return decodedData;
+        }
+      }
+    } catch (e) {
+      print('FIRESTORE FETCH ERROR: $e');
+    }
+    return {};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Авторизация')),
+        body: const Center(child: Text('Пожалуйста, войдите в аккаунт')),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('⭐', style: TextStyle(fontSize: 16)),
+            SizedBox(width: 8),
+            Text('Премиум доступ 🏅', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            SizedBox(width: 8),
+            Text('⭐', style: TextStyle(fontSize: 16)),
+          ],
+        ),
+        centerTitle: true,
+        elevation: 0,
+        toolbarHeight: 46,
       ),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Ошибка загрузки: ${snapshot.error}'));
+          }
+
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(child: Text('Данные пользователя не найдены.'));
+          }
+
+          final userData = snapshot.data!.data() as Map<String, dynamic>?;
+          final bool isPremium = userData?['isPremium'] ?? false;
+          final bool isLifetime = userData?['isLifetime'] ?? false;
+          final Timestamp? expiresAtTimestamp = userData?['expiresAt'] as Timestamp?;
+
+          if (isPremium) {
+            return _buildActiveSubscriptionView(
+              isLifetime: isLifetime,
+              expiresAt: expiresAtTimestamp?.toDate(),
+            );
+          } else {
+            return _buildPaywallView();
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildActiveSubscriptionView({
+    required bool isLifetime,
+    DateTime? expiresAt,
+  }) {
+    String formattedDate = 'Неограниченно';
+    if (!isLifetime && expiresAt != null) {
+      formattedDate = '${expiresAt.day.toString().padLeft(2, '0')}.'
+          '${expiresAt.month.toString().padLeft(2, '0')}.'
+          '${expiresAt.year}';
+    }
+
+    return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.lock_outline_rounded, size: 48, color: Colors.teal.shade700),
-            const SizedBox(height: 16),
+            const Icon(Icons.check_circle_rounded, color: Colors.green, size: 56),
+            const SizedBox(height: 12),
+            const Text('Подписка активна 🎉', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
             Text(
-              _isLogin ? 'Вход в аккаунт' : 'Создание аккаунта',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              isLifetime ? 'Доступ Навсегда ✨' : 'Срок действия до: $formattedDate',
               textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Вернуться назад'),
             ),
             const SizedBox(height: 8),
-            Text(
-              _isLogin 
-                  ? 'Авторизуйтесь, чтобы синхронизировать ваш прогресс' 
-                  : 'Зарегистрируйтесь для сохранения доступа',
-              style: TextStyle(fontSize: 13, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                prefixIcon: const Icon(Icons.email_outlined),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _passwordController,
-              decoration: InputDecoration(
-                labelText: 'Пароль',
-                prefixIcon: const Icon(Icons.lock_outline),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              obscureText: true,
-            ),
-            const SizedBox(height: 24),
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal.shade700,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: _submitAuth,
-                    child: Text(
-                      _isLogin ? 'Войти' : 'Зарегистрироваться',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-            const SizedBox(height: 8),
+            
+            // Кнопка отмены, которая теперь вызывает предварительное предупреждение
             TextButton(
-              onPressed: () => setState(() => _isLogin = !_isLogin),
-              child: Text(
-                _isLogin
-                    ? 'Нет аккаунта? Зарегистрироваться'
-                    : 'Уже есть аккаунт? Войти',
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: _handleCancelSubscription,
+              child: const Text('Отменить подписку и вернуть средства'),
             ),
           ],
         ),
@@ -335,249 +375,240 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
     );
   }
 
-  Widget _buildSubscriptionStatus(User user) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .snapshots(),
+  Widget _buildPaywallView() {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _fetchRemoteTariffs(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        bool isPremium = false;
-        bool autoRenew = false;
-        bool isLifetime = false;
-        DateTime? expiresAt;
+        final remoteData = snapshot.data ?? {};
 
-        if (snapshot.hasData && snapshot.data!.exists) {
-          final data = snapshot.data!.data() as Map<String, dynamic>?;
-          isPremium = SubscriptionService.isDataPremiumActive(data);
-          autoRenew = data?['autoRenew'] ?? false;
-          
-          final dynamic rawLifetime = data?['isLifetime'];
-          final dynamic rawPeriod = data?['subscriptionPeriod'];
-          isLifetime = rawLifetime == true || 
-              rawLifetime.toString().toLowerCase() == 'true' || 
-              rawPeriod.toString().toLowerCase() == 'lifetime';
+        final monthData = remoteData['sub_1_month'] as Map<String, dynamic>?;
+        final yearData = remoteData['sub_1_year'] as Map<String, dynamic>?;
+        final lifetimeData = remoteData['lifetime_access'] as Map<String, dynamic>?;
 
-          expiresAt = SubscriptionService.getExpirationDate(data);
+        final monthPrice = monthData?['price'] ?? 189;
+        final monthOldPrice = monthData?['old_price'];
+        final monthTitle = monthData?['title'] ?? '1 месяц';
+        final monthSubtitle = monthData?['subtitle'] ?? 'Гибкий старт';
+        final monthBadge = monthData?['badge'] as String?;
 
-          if (isPremium && expiresAt != null && !isLifetime) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _startCountdown(expiresAt!, user.uid);
-            });
-          }
-        }
+        final yearPrice = yearData?['price'] ?? 1990;
+        final yearOldPrice = yearData?['old_price'];
+        final yearTitle = yearData?['title'] ?? '1 год';
+        final yearSubtitle = yearData?['subtitle'] ?? 'Выбор большинства';
+        final yearBadge = yearData?['badge'] as String?;
 
-        final days = _remainingTime.inDays;
-        final hours = _remainingTime.inHours.remainder(24);
-        final minutes = _remainingTime.inMinutes.remainder(60);
-        final seconds = _remainingTime.inSeconds.remainder(60);
+        final lifetimePrice = lifetimeData?['price'] ?? 2990;
+        final lifetimeOldPrice = lifetimeData?['old_price'];
+        final lifetimeTitle = lifetimeData?['title'] ?? 'Навсегда';
+        final lifetimeSubtitle = lifetimeData?['subtitle'] ?? 'Разовый платеж';
+        final lifetimeBadge = lifetimeData?['badge'] as String?;
 
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isPremium 
-                      ? Colors.amber.shade600.withAlpha(100) 
-                      : (isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade200),
-                ),
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: isPremium
-                      ? LinearGradient(
-                          colors: [
-                            Colors.amber.shade900.withAlpha(30),
-                            Colors.amber.shade700.withAlpha(10),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : null,
-                ),
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isPremium 
-                            ? Colors.amber.shade500.withAlpha(30) 
-                            : Colors.grey.shade500.withAlpha(20),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        isPremium ? Icons.workspace_premium_rounded : Icons.lock_outline_rounded,
-                        color: isPremium ? Colors.amber : Colors.grey,
-                        size: 56,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Текущий аккаунт:',
-                      style: TextStyle(fontSize: 12, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-                    ),
-                    Text(
-                      user.email ?? '',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    Chip(
-                      backgroundColor: isPremium ? Colors.green.shade900.withAlpha(50) : Colors.red.shade900.withAlpha(50),
-                      side: BorderSide(color: isPremium ? Colors.green : Colors.red),
-                      avatar: Icon(
-                        isPremium ? Icons.check_circle_rounded : Icons.cancel_rounded,
-                        color: isPremium ? const Color.fromARGB(255, 9, 153, 83) : Colors.redAccent,
-                        size: 18,
-                      ),
-                      label: Text(
-                        isPremium
-                            ? (isLifetime ? 'Бессрочный Премиум ' : 'Премиум Активен 🎉')
-                            : 'Доступ ограничен',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isPremium ? const Color.fromARGB(255, 6, 173, 92) : Colors.redAccent,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            if (isPremium && expiresAt != null && !isLifetime) ...[
-              const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Осталось времени доступа:',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${days}д ${hours}ч ${minutes}м ${seconds}с',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.teal.shade400,
-                        ),
-                      ),
-                    ],
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Text('🚀', style: TextStyle(fontSize: 20)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Выберите тариф',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                ),
+                  SizedBox(width: 8),
+                  Text('✨', style: TextStyle(fontSize: 20)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              
+              _buildPricingCard(
+                productId: 'sub_1_month',
+                title: monthTitle,
+                price: '$monthPrice ₽',
+                oldPrice: monthOldPrice != null ? '$monthOldPrice ₽' : null,
+                subtitle: monthSubtitle,
+                icon: Icons.flash_on_rounded,
+                primaryColor: Colors.blue,
+                badge: monthBadge,
+              ),
+              const SizedBox(height: 8),
+
+              _buildPricingCard(
+                productId: 'sub_1_year',
+                title: yearTitle,
+                price: '$yearPrice ₽',
+                oldPrice: yearOldPrice != null ? '$yearOldPrice ₽' : null,
+                subtitle: yearSubtitle,
+                icon: Icons.star_rounded,
+                primaryColor: Colors.amber.shade800,
+                badge: yearBadge,
+              ),
+              const SizedBox(height: 8),
+
+              _buildPricingCard(
+                productId: 'lifetime_access',
+                title: lifetimeTitle,
+                price: '$lifetimePrice ₽',
+                oldPrice: lifetimeOldPrice != null ? '$lifetimeOldPrice ₽' : null,
+                subtitle: lifetimeSubtitle,
+                icon: Icons.all_inclusive_rounded,
+                primaryColor: Colors.teal.shade700,
+                badge: lifetimeBadge,
               ),
             ],
-
-            const SizedBox(height: 24),
-
-            if (!isPremium) ...[
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Полный доступ',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.shade800,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              'НАВСЕГДА',
-                              style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      _buildFeatureRow('Все 28 уроков и интерактивные правила'),
-                      const SizedBox(height: 20),
-                      _isPaymentLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orange.shade800,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                                onPressed: () => _openOneTimePaymentPage(user),
-                                child: const Text(
-                                  'Купить навсегда за 35 ₽',
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ),
-                    ],
-                  ),
-                ),
-              ),
-            ] else if (autoRenew && !isLifetime) ...[
-              _isCancelling
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade700,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onPressed: () => _handleCancelSubscription(user),
-                      child: const Text('Отменить автопродление'),
-                    ),
-            ],
-
-            const SizedBox(height: 16),
-
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              icon: const Icon(Icons.logout_rounded, size: 20),
-              label: const Text('Выйти из аккаунта'),
-              onPressed: () => AuthService.instance.signOut(),
-            ),
-          ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildFeatureRow(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        children: [
-          Icon(Icons.check_circle_outline_rounded, size: 18, color: Colors.teal.shade400),
-          const SizedBox(width: 10),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
+  Widget _buildPricingCard({
+    required String productId,
+    required String title,
+    required String price,
+    String? oldPrice,
+    required String subtitle,
+    required IconData icon,
+    required Color primaryColor,
+    String? badge,
+  }) {
+    final bool isThisLoading = _loadingProductId == productId;
+    final bool isAnyLoading = _loadingProductId != null;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
         ],
+        border: Border.all(
+          color: badge != null && badge.isNotEmpty 
+              ? primaryColor.withOpacity(0.5) 
+              : Colors.grey.shade200,
+          width: badge != null && badge.isNotEmpty ? 1.5 : 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: isAnyLoading ? null : () => _handlePayment(productId),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: primaryColor, size: 20),
+                ),
+                const SizedBox(width: 12),
+                
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                          if (badge != null && badge.isNotEmpty) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade600,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                badge,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (oldPrice != null) ...[
+                      Text(
+                        oldPrice,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.red.shade500,
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: Colors.red.shade500,
+                          decorationThickness: 2,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                    ],
+                    Text(
+                      price,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: primaryColor,
+                        height: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    isThisLoading
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            'Выбрать →',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

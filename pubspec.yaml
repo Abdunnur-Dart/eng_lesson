@@ -1,7 +1,7 @@
 name: "arabic"
 description: "арабские буквы"
 publish_to: 'none'
-version: 1.0.0+111
+version: 1.0.0+115
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -23,6 +23,7 @@ dependencies:
   firebase_messaging: ^14.9.4
   flutter_local_notifications: ^18.0.1
   home_widget: ^0.9.3
+  google_sign_in: ^7.2.0
 
 
 # Принудительно фиксируем версию фоновой библиотеки, не требующей compileSdk 36
@@ -53,6 +54,12 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/icon.png"
   min_sdk_android: 21
+  
+  # Отключаем стандартную генерацию адаптивного фона с белым кругом, 
+  # если твоя картинка уже квадратная и содержит собственный фон/закругления:
+  adaptive_icon_background: "#FF00A471" # Укажи здесь цвет твоего зеленого фона в HEX, чтобы он сливался
+  adaptive_icon_foreground: "assets/icon.png" # Сама иконка поверх фона
+
   web:
     generate: true
     image_path: "assets/icon.png"

@@ -6,15 +6,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'subscription_service.dart';
 
 class SettingsService extends ChangeNotifier {
-  static final SettingsService instance = SettingsService._init();
+  static final SettingsService instance = SettingsService._internal();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   StreamSubscription<DocumentSnapshot>? _userDocSubscription;
+  StreamSubscription<DocumentSnapshot>? _announcementSubscription;
 
-  SettingsService._init() {
-    _loadSettings();
-    _listenAuthChanges();
+  SettingsService._internal() {
+    _init();
   }
 
   bool _isDarkMode = false;
@@ -24,9 +24,9 @@ class SettingsService extends ChangeNotifier {
   int _streakCount = 0;
   String? _lastActivityDate;
 
-  // Баллы и рекорды уроков
   int _totalPoints = 0;
   final Map<int, int> _lessonBestScores = {};
+  Map<String, dynamic>? _announcementData;
 
   bool get isDarkMode => _isDarkMode;
   bool get soundEnabled => _soundEnabled;
@@ -34,6 +34,13 @@ class SettingsService extends ChangeNotifier {
   bool get isPremium => _isPremium;
   int get streakCount => _streakCount;
   int get totalPoints => _totalPoints;
+  Map<String, dynamic>? get announcementData => _announcementData;
+
+  void _init() {
+    _loadSettings();
+    _listenAuthChanges();
+    _listenGlobalAnnouncement();
+  }
 
   void _listenAuthChanges() {
     _auth.authStateChanges().listen((User? user) {
@@ -47,6 +54,22 @@ class SettingsService extends ChangeNotifier {
     });
   }
 
+  void _listenGlobalAnnouncement() {
+    _announcementSubscription = _firestore
+        .collection('config')
+        .doc('announcement')
+        .snapshots()
+        .listen((DocumentSnapshot snapshot) {
+      if (snapshot.exists) {
+        _announcementData = snapshot.data() as Map<String, dynamic>?;
+        notifyListeners();
+      } else {
+        _announcementData = null;
+        notifyListeners();
+      }
+    });
+  }
+
   void _listenFirestoreUserData(String uid) {
     _userDocSubscription = _firestore
         .collection('users')
@@ -55,7 +78,7 @@ class SettingsService extends ChangeNotifier {
         .listen((DocumentSnapshot snapshot) async {
       if (snapshot.exists) {
         final data = snapshot.data() as Map<String, dynamic>?;
-        final bool activePremium = SubscriptionService.isDataPremiumActive(data);
+        final bool activePremium = SubscriptionService.checkPremiumFromData(data); // CHANGED
         
         if (_isPremium != activePremium) {
           _isPremium = activePremium;
@@ -64,7 +87,6 @@ class SettingsService extends ChangeNotifier {
           notifyListeners();
         }
 
-        // Синхронизация стрика из Firestore
         if (data != null && data.containsKey('streakCount')) {
           final firestoreStreak = (data['streakCount'] as num?)?.toInt() ?? 0;
           final firestoreLastDate = data['lastActivityDate'] as String?;
@@ -80,7 +102,6 @@ class SettingsService extends ChangeNotifier {
           }
         }
 
-        // Синхронизация общих баллов из Firestore
         if (data != null && data.containsKey('totalPoints')) {
           final firestorePoints = (data['totalPoints'] as num?)?.toInt() ?? 0;
           if (firestorePoints > _totalPoints) {
@@ -160,7 +181,6 @@ class SettingsService extends ChangeNotifier {
     _lastActivityDate = prefs.getString('lastActivityDate');
     _totalPoints = prefs.getInt('total_user_points') ?? 0;
 
-    // Загрузка сохраненных рекордов уроков в память
     final keys = prefs.getKeys();
     for (String key in keys) {
       if (key.startsWith('lesson_best_')) {
@@ -238,7 +258,6 @@ class SettingsService extends ChangeNotifier {
     }
   }
 
-  // Методы работы с балльной системой и рекордами
   int getLessonBestScore(int lessonId) {
     return _lessonBestScores[lessonId] ?? 0;
   }
@@ -366,6 +385,7 @@ class SettingsService extends ChangeNotifier {
   @override
   void dispose() {
     _userDocSubscription?.cancel();
+    _announcementSubscription?.cancel();
     super.dispose();
   }
 }

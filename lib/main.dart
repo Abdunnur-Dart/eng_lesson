@@ -30,7 +30,12 @@ void main() async {
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
-
+FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    sslEnabled: true,
+    // Некоторые версии SDK поддерживают явное переключение, но если выдает ошибку,
+    // проверьте инициализацию ниже:
+  );
   runApp(const MyApp());
 }
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/letter_model.dart';
 import '../services/settings_service.dart';
 import '../services/analytics_service.dart';
@@ -23,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late PageController _pageController;
   int _currentIndex = 0;
   double _currentViewportFraction = 0.78;
+  String? _lastShownAnnouncementId;
 
   @override
   void initState() {
@@ -31,6 +33,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadJsonData();
     SettingsService.instance.updateStreak();
     AnalyticsService.instance.logScreenView(screenName: 'HomeScreen');
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowAnnouncement();
+    });
   }
 
   @override
@@ -39,12 +45,80 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // Плавающий расчет видимой части карточки без жестких брейкпоинтов
+  Future<void> _checkAndShowAnnouncement() async {
+    final announcement = SettingsService.instance.announcementData;
+    if (announcement == null) return;
+
+    final bool isActive = announcement['isActive'] ?? false;
+    if (!isActive) return;
+
+    final String announcementId = announcement['id']?.toString() ?? announcement['updatedAt']?.toString() ?? 'default_announcement';
+    
+    final prefs = await SharedPreferences.getInstance();
+    final lastSeenId = prefs.getString('last_seen_announcement_id');
+
+    if (lastSeenId == announcementId) return;
+    if (!mounted) return;
+
+    final isDark = SettingsService.instance.isDarkMode;
+    final String title = announcement['title'] ?? 'Важное уведомление';
+    final String htmlContent = announcement['htmlContent'] ?? announcement['content'] ?? '';
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            const Icon(Icons.campaign_rounded, color: Colors.teal, size: 28),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 350, maxWidth: 400),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  htmlContent.replaceAll(RegExp(r'<[^>]*>'), ''),
+                  style: TextStyle(fontSize: 15, color: isDark ? Colors.white70 : Colors.black87),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.teal,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () async {
+              await prefs.setString('last_seen_announcement_id', announcementId);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Понятно', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   double _calculateViewportFraction(double screenWidth) {
     return (350.0 / screenWidth).clamp(0.35, 0.82);
   }
 
-  // Динамическое обновление контроллера при плавной изменении ширины окна
   void _updatePageControllerIfNeeded(double screenWidth) {
     final double targetFraction = _calculateViewportFraction(screenWidth);
     if ((targetFraction - _currentViewportFraction).abs() > 0.01) {
@@ -184,13 +258,23 @@ class _HomeScreenState extends State<HomeScreen> {
         final isPremium = settings.isPremium;
         final unlockedCount = (_lettersData.length / 2).ceil();
 
+        final announcement = settings.announcementData;
+        if (announcement != null && (announcement['isActive'] ?? false)) {
+          final String announcementId = announcement['id']?.toString() ?? announcement['updatedAt']?.toString() ?? 'default_announcement';
+          if (_lastShownAnnouncementId != announcementId) {
+            _lastShownAnnouncementId = announcementId;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _checkAndShowAnnouncement();
+            });
+          }
+        }
+
         return Scaffold(
           body: LayoutBuilder(
             builder: (context, constraints) {
               final double screenWidth = constraints.maxWidth;
               _updatePageControllerIfNeeded(screenWidth);
 
-              // Плавающие размеры интерфейсных элементов
               final double titleFontSize = (screenWidth * 0.032).clamp(20.0, 28.0);
               final double streakFontSize = (screenWidth * 0.022).clamp(14.0, 18.0);
               final double streakIconSize = (screenWidth * 0.035).clamp(22.0, 30.0);
@@ -210,7 +294,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: SafeArea(
                   child: Column(
                     children: [
-                      // Плавающая шапка
                       Padding(
                         padding: EdgeInsets.symmetric(
                           horizontal: (screenWidth * 0.04).clamp(16.0, 36.0),
@@ -250,13 +333,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
 
-                      // Плавающий виджет статистики (Стрик + Баллы)
                       Container(
                         margin: const EdgeInsets.symmetric(vertical: 6.0),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Дневной стрик
                             Container(
                               padding: EdgeInsets.symmetric(
                                 horizontal: (screenWidth * 0.03).clamp(12.0, 18.0),
@@ -304,7 +385,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             const SizedBox(width: 10),
-                            // Общие баллы
                             Container(
                               padding: EdgeInsets.symmetric(
                                 horizontal: (screenWidth * 0.03).clamp(12.0, 18.0),
@@ -355,7 +435,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
 
-                      // Плавающая карусель
                       Expanded(
                         child: _isLoading
                             ? Center(
@@ -613,7 +692,6 @@ class LessonCardButton extends StatelessWidget {
                   padding: EdgeInsets.all((shortestSide * 0.04).clamp(14.0, 24.0)),
                   child: Column(
                     children: [
-                      // Верхняя плашка урока
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -656,7 +734,6 @@ class LessonCardButton extends StatelessWidget {
                         ],
                       ),
 
-                      // Центральная часть
                       Expanded(
                         child: isLocked
                             ? Column(
