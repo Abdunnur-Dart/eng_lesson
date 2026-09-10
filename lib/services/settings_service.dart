@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'; // NEW
 import 'subscription_service.dart';
 
 class SettingsService extends ChangeNotifier {
@@ -10,8 +11,11 @@ class SettingsService extends ChangeNotifier {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseMessaging _messaging = FirebaseMessaging.instance; // NEW
+
   StreamSubscription<DocumentSnapshot>? _userDocSubscription;
   StreamSubscription<DocumentSnapshot>? _announcementSubscription;
+  StreamSubscription<String>? _fcmTokenSubscription; // NEW
 
   SettingsService._internal() {
     _init();
@@ -23,6 +27,8 @@ class SettingsService extends ChangeNotifier {
   bool _isPremium = false;
   int _streakCount = 0;
   String? _lastActivityDate;
+  String? _lastLoginDate;
+  String? _fcmToken; // NEW
 
   int _totalPoints = 0;
   final Map<int, int> _lessonBestScores = {};
@@ -34,6 +40,8 @@ class SettingsService extends ChangeNotifier {
   bool get isPremium => _isPremium;
   int get streakCount => _streakCount;
   int get totalPoints => _totalPoints;
+  String? get lastLoginDate => _lastLoginDate;
+  String? get fcmToken => _fcmToken; // NEW
   Map<String, dynamic>? get announcementData => _announcementData;
 
   void _init() {
@@ -48,6 +56,8 @@ class SettingsService extends ChangeNotifier {
 
       if (user != null) {
         _listenFirestoreUserData(user.uid);
+        updateLastLogin();
+        updateFcmToken(); // NEW: обновляем FCM токен при входе
       } else {
         clearUserDataOnSignOut();
       }
@@ -78,7 +88,7 @@ class SettingsService extends ChangeNotifier {
         .listen((DocumentSnapshot snapshot) async {
       if (snapshot.exists) {
         final data = snapshot.data() as Map<String, dynamic>?;
-        final bool activePremium = SubscriptionService.checkPremiumFromData(data); // CHANGED
+        final bool activePremium = SubscriptionService.checkPremiumFromData(data);
         
         if (_isPremium != activePremium) {
           _isPremium = activePremium;
@@ -149,10 +159,79 @@ class SettingsService extends ChangeNotifier {
     }
   }
 
+  // NEW: Метод для получения и сохранения FCM токена
+  Future<void> updateFcmToken() async {
+    try {
+      // Запрашиваем разрешения для push-уведомлений
+      NotificationSettings settings = await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        
+        final token = await _messaging.getToken();
+        if (token != null) {
+          _fcmToken = token;
+          await _saveFcmTokenToFirestore(token);
+        }
+
+        // Подписываемся на смену токена в процессе работы приложения
+        _fcmTokenSubscription?.cancel();
+        _fcmTokenSubscription = _messaging.onTokenRefresh.listen((newToken) async {
+          _fcmToken = newToken;
+          await _saveFcmTokenToFirestore(newToken);
+        });
+      }
+    } catch (e) {
+      debugPrint('Ошибка при получении FCM токена: $e');
+    }
+  }
+
+  // NEW: Вспомогательный метод сохранения токена в документе пользователя
+  Future<void> _saveFcmTokenToFirestore(String token) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      try {
+        await _firestore.collection('users').doc(currentUser.uid).set({
+          'fcmToken': token,
+          'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Ошибка сохранения FCM токена в Firestore: $e');
+      }
+    }
+  }
+
+  Future<void> updateLastLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final nowIso = DateTime.now().toIso8601String();
+    
+    _lastLoginDate = nowIso;
+    await prefs.setString('lastLoginDate', nowIso);
+
+    final currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      try {
+        await _firestore.collection('users').doc(currentUser.uid).set({
+          'lastLoginAt': FieldValue.serverTimestamp(),
+          'lastLoginDate': nowIso,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Ошибка сохранения даты входа в Firestore: $e');
+      }
+    }
+  }
+
   Future<void> clearUserDataOnSignOut() async {
+    _fcmTokenSubscription?.cancel(); // NEW
     _isPremium = false;
     _streakCount = 0;
     _lastActivityDate = null;
+    _lastLoginDate = null;
+    _fcmToken = null; // NEW
     _totalPoints = 0;
     _lessonBestScores.clear();
 
@@ -160,6 +239,7 @@ class SettingsService extends ChangeNotifier {
     await prefs.setBool('isPremium', false);
     await prefs.remove('streakCount');
     await prefs.remove('lastActivityDate');
+    await prefs.remove('lastLoginDate');
     await prefs.remove('total_user_points');
     
     final keys = prefs.getKeys();
@@ -179,6 +259,7 @@ class SettingsService extends ChangeNotifier {
     _isPremium = prefs.getBool('isPremium') ?? false;
     _streakCount = prefs.getInt('streakCount') ?? 0;
     _lastActivityDate = prefs.getString('lastActivityDate');
+    _lastLoginDate = prefs.getString('lastLoginDate');
     _totalPoints = prefs.getInt('total_user_points') ?? 0;
 
     final keys = prefs.getKeys();
@@ -386,6 +467,7 @@ class SettingsService extends ChangeNotifier {
   void dispose() {
     _userDocSubscription?.cancel();
     _announcementSubscription?.cancel();
+    _fcmTokenSubscription?.cancel(); // NEW
     super.dispose();
   }
 }

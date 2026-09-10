@@ -1,7 +1,7 @@
 name: "arabic"
 description: "арабские буквы"
 publish_to: 'none'
-version: 1.0.0+115
+version: 1.0.0+1167
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -22,11 +22,7 @@ dependencies:
   firebase_core: ^2.32.0
   firebase_messaging: ^14.9.4
   flutter_local_notifications: ^18.0.1
-  home_widget: ^0.9.3
   google_sign_in: ^7.2.0
-
-
-# Принудительно фиксируем версию фоновой библиотеки, не требующей compileSdk 36
 dependency_overrides:
   package_info_plus: 8.0.0
 

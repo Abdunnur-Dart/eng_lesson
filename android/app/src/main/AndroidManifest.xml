@@ -59,24 +59,25 @@
                 <!-- Указываем вашу схему и хост -->
                 <data android:scheme="muallimsani" android:host="success" />
             </intent-filter>
-        </activity>
 
-        <!-- NEW: Регистрация провайдера виджета -->
-        <receiver
-            android:name=".AppWidgetProvider"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/app_widget_info" />
-        </receiver>
+            <!-- 3. NEW: Фильтр перехвата диплинков акции RuStore (arabicletters://paywall и muallimsani://paywall) -->
+            <intent-filter> <!-- NEW -->
+                <action android:name="android.intent.action.VIEW" /> <!-- NEW -->
+                <category android:name="android.intent.category.DEFAULT" /> <!-- NEW -->
+                <category android:name="android.intent.category.BROWSABLE" /> <!-- NEW -->
+                
+                <data android:scheme="arabicletters" android:host="paywall" /> <!-- NEW -->
+                <data android:scheme="muallimsani" android:host="paywall" /> <!-- NEW -->
+            </intent-filter> <!-- NEW -->
+        </activity>
 
         <!-- Не удаляйте эту мета-информацию, она нужна Flutter -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+<meta-data
+    android:name="com.google.firebase.messaging.default_notification_icon"
+    android:resource="@drawable/ic_notification" />
     </application>
 
 </manifest>

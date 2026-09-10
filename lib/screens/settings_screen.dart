@@ -213,7 +213,7 @@ $systemInfo''';
                     decoration: BoxDecoration(
                       color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                      border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
                     ),
                     child: Row(
                       children: [
@@ -246,7 +246,7 @@ $systemInfo''';
                     decoration: BoxDecoration(
                       color: isDark ? Colors.grey.shade900 : Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                      border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,7 +313,46 @@ $systemInfo''';
     );
   }
 
-  Future<void> _deleteUserAccount(BuildContext context) async {
+  // Метод выхода из аккаунта
+  Future<void> _signOut(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Выход из аккаунта'),
+        content: const Text('Вы действительно хотите выйти из своего аккаунта?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Отмена'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Выйти', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await FirebaseAuth.instance.signOut();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Вы успешно вышли из аккаунта')),
+        );
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка выхода: $e')),
+        );
+      }
+    }
+  }
+
+ Future<void> _deleteUserAccount(BuildContext context) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -368,7 +407,11 @@ $systemInfo''';
             ),
           );
           await FirebaseAuth.instance.signOut();
-          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+          
+          // Безопасное использование context после async-зазора
+          if (context.mounted) {
+            Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+          }
         }
       } else {
         if (context.mounted) {
@@ -480,29 +523,81 @@ $systemInfo''';
                             ],
                           ),
                         ),
-                        const Divider(height: 1, indent: 16, endIndent: 16),
-                        ListTile(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          title: const Text('Управление подпиской', style: TextStyle(fontWeight: FontWeight.w600)),
-                          subtitle: const Text('Статус аккаунта и продление'),
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.amber.shade500.withAlpha(30),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.star_rounded, color: Colors.amber),
-                          ),
-                          trailing: const Icon(Icons.chevron_right_rounded, size: 22),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const AuthPaymentScreen(),
+                        // Кнопка входа и кнопка управления подпиской для неавторизованных пользователей // CHANGED
+                        if (user == null) ...[
+                          const Divider(height: 1, indent: 16, endIndent: 16),
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            title: const Text('Войти в аккаунт', style: TextStyle(fontWeight: FontWeight.w600)),
+                            subtitle: const Text('Авторизация и синхронизация прогресса'),
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.teal.shade500.withAlpha(30),
+                                shape: BoxShape.circle,
                               ),
-                            );
-                          },
-                        ),
+                              child: const Icon(Icons.login_rounded, color: Colors.teal),
+                            ),
+                            trailing: const Icon(Icons.chevron_right_rounded, size: 22),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AuthPaymentScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const Divider(height: 1, indent: 16, endIndent: 16), // NEW
+                          ListTile( // NEW
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), // NEW
+                            title: const Text('Управление подпиской', style: TextStyle(fontWeight: FontWeight.w600)), // NEW
+                            subtitle: const Text('Статус аккаунта и продление'), // NEW
+                            leading: Container( // NEW
+                              padding: const EdgeInsets.all(8), // NEW
+                              decoration: BoxDecoration( // NEW
+                                color: Colors.amber.shade500.withAlpha(30), // NEW
+                                shape: BoxShape.circle, // NEW
+                              ), // NEW
+                              child: const Icon(Icons.star_rounded, color: Colors.amber), // NEW
+                            ), // NEW
+                            trailing: const Icon(Icons.chevron_right_rounded, size: 22), // NEW
+                            onTap: () { // NEW
+                              Navigator.push( // NEW
+                                context, // NEW
+                                MaterialPageRoute( // NEW
+                                  builder: (context) => const AuthPaymentScreen(), // NEW
+                                ), // NEW
+                              ); // NEW
+                            }, // NEW
+                          ), // NEW
+                        ],
+                        // Кнопка управления подпиской только для авторизованных
+                        if (user != null) ...[
+                          const Divider(height: 1, indent: 16, endIndent: 16),
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            title: const Text('Управление подпиской', style: TextStyle(fontWeight: FontWeight.w600)),
+                            subtitle: const Text('Статус аккаунта и продление'),
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.shade500.withAlpha(30),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.star_rounded, color: Colors.amber),
+                            ),
+                            trailing: const Icon(Icons.chevron_right_rounded, size: 22),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AuthPaymentScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -636,6 +731,22 @@ $systemInfo''';
                           onTap: () => _handleSupportAction(context),
                         ),
                         if (user != null) ...[
+                          const Divider(height: 1, indent: 16, endIndent: 16),
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            title: const Text('Выйти из аккаунта', style: TextStyle(fontWeight: FontWeight.w600)),
+                            subtitle: const Text('Завершить текущую сессию'),
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.shade500.withAlpha(30),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.logout_rounded, color: Colors.orange),
+                            ),
+                            trailing: const Icon(Icons.chevron_right_rounded, size: 22),
+                            onTap: () => _signOut(context),
+                          ),
                           const Divider(height: 1, indent: 16, endIndent: 16),
                           ListTile(
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

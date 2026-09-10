@@ -4,14 +4,10 @@ import 'quiz_screen.dart';
 
 class DetailScreen extends StatefulWidget {
   final LetterModel letterData;
-  final List<LetterModel>? allLetters;
-  final int? currentIndex;
 
   const DetailScreen({
     super.key,
     required this.letterData,
-    this.allLetters,
-    this.currentIndex,
   });
 
   @override
@@ -131,9 +127,8 @@ class _DetailScreenState extends State<DetailScreen> {
                     },
                     itemBuilder: (context, index) {
                       final variation = variations.isNotEmpty ? variations[index] : null;
-                      String symbol = variation?.symbol ?? letter.title;
-                      String transcription = variation?.transcription.toUpperCase() ?? '';
-
+                      final String symbol = variation?.symbol ?? letter.title;
+                      final String transcription = variation?.transcription.toUpperCase() ?? '';
                       final bool hasDescription = index == 0 && letter.description.isNotEmpty;
 
                       return SingleChildScrollView(
@@ -282,7 +277,7 @@ class _SymbolCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(28.0),
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.black.withOpacity(0.3) : Colors.teal.shade900.withOpacity(0.08),
+                color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.teal.shade900.withValues(alpha: 0.08),
                 blurRadius: 20,
                 spreadRadius: 2,
                 offset: const Offset(0, 8),
@@ -433,7 +428,7 @@ class _BottomNavBar extends StatelessWidget {
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.4) : Colors.teal.shade900.withOpacity(0.06),
+            color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.teal.shade900.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),

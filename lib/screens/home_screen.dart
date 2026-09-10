@@ -6,25 +6,32 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/letter_model.dart';
 import '../services/settings_service.dart';
 import '../services/analytics_service.dart';
-import '../services/widget_service.dart';
 import 'detail_screen.dart';
 import 'settings_screen.dart';
 import 'auth_payment_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  Widget build(BuildContext context) {
+    return const _HomeContentScreen();
+  }
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeContentScreen extends StatefulWidget {
+  const _HomeContentScreen();
+
+  @override
+  State<_HomeContentScreen> createState() => _HomeContentScreenState();
+}
+
+class _HomeContentScreenState extends State<_HomeContentScreen> {
   List<LetterModel> _lettersData = [];
   bool _isLoading = true;
   late PageController _pageController;
   int _currentIndex = 0;
   double _currentViewportFraction = 0.78;
-  String? _lastShownAnnouncementId;
 
   @override
   void initState() {
@@ -52,7 +59,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final bool isActive = announcement['isActive'] ?? false;
     if (!isActive) return;
 
-    final String announcementId = announcement['id']?.toString() ?? announcement['updatedAt']?.toString() ?? 'default_announcement';
+    final String announcementId = announcement['id']?.toString() ??
+        announcement['updatedAt']?.toString() ??
+        'default_announcement';
     
     final prefs = await SharedPreferences.getInstance();
     final lastSeenId = prefs.getString('last_seen_announcement_id');
@@ -63,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final isDark = SettingsService.instance.isDarkMode;
     final String title = announcement['title'] ?? 'Важное уведомление';
     final String htmlContent = announcement['htmlContent'] ?? announcement['content'] ?? '';
+    final String plainText = htmlContent.replaceAll(RegExp(r'<[^>]*>'), '');
 
     showDialog(
       context: context,
@@ -90,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  htmlContent.replaceAll(RegExp(r'<[^>]*>'), ''),
+                  plainText,
                   style: TextStyle(fontSize: 15, color: isDark ? Colors.white70 : Colors.black87),
                 ),
               ],
@@ -106,7 +116,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             onPressed: () async {
               await prefs.setString('last_seen_announcement_id', announcementId);
-              Navigator.pop(ctx);
+              if (ctx.mounted) {
+                Navigator.pop(ctx);
+              }
             },
             child: const Text('Понятно', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
@@ -124,11 +136,16 @@ class _HomeScreenState extends State<HomeScreen> {
     if ((targetFraction - _currentViewportFraction).abs() > 0.01) {
       _currentViewportFraction = targetFraction;
       final int previousIndex = _currentIndex;
-      _pageController.dispose();
-      _pageController = PageController(
-        initialPage: previousIndex,
-        viewportFraction: _currentViewportFraction,
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _pageController.dispose();
+        setState(() {
+          _pageController = PageController(
+            initialPage: previousIndex,
+            viewportFraction: _currentViewportFraction,
+          );
+        });
+      });
     }
   }
 
@@ -147,28 +164,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'дней';
   }
 
-  Future<void> _updateHomeWidget(int index) async {
-    if (index >= 0 && index < _lettersData.length) {
-      final letterData = _lettersData[index];
-      final String symbol = letterData.variations.isNotEmpty
-          ? letterData.variations.first.symbol
-          : '${letterData.id}';
-
-      final String variationsText = letterData.variations
-          .map((v) => v.symbol)
-          .join('   ');
-
-      final double progress = await SettingsService.instance.getLessonProgress(letterData.id);
-      final String progressPercent = '${(progress * 100).round()}%';
-
-      await WidgetService.instance.updateWidgetData(
-        letter: symbol,
-        variations: variationsText,
-        progressPercent: progressPercent,
-      );
-    }
-  }
-
   Future<void> _loadJsonData() async {
     try {
       final String response = await rootBundle.loadString('assets/letters_data.json');
@@ -181,7 +176,6 @@ class _HomeScreenState extends State<HomeScreen> {
             .toList();
         _isLoading = false;
       });
-      _updateHomeWidget(0);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -224,6 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             onPressed: () async {
               Navigator.pop(ctx);
+              if (!mounted) return;
               await Navigator.push(
                 dialogContext,
                 MaterialPageRoute(
@@ -258,17 +253,6 @@ class _HomeScreenState extends State<HomeScreen> {
         final isPremium = settings.isPremium;
         final unlockedCount = (_lettersData.length / 2).ceil();
 
-        final announcement = settings.announcementData;
-        if (announcement != null && (announcement['isActive'] ?? false)) {
-          final String announcementId = announcement['id']?.toString() ?? announcement['updatedAt']?.toString() ?? 'default_announcement';
-          if (_lastShownAnnouncementId != announcementId) {
-            _lastShownAnnouncementId = announcementId;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _checkAndShowAnnouncement();
-            });
-          }
-        }
-
         return Scaffold(
           body: LayoutBuilder(
             builder: (context, constraints) {
@@ -302,7 +286,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            SizedBox(width: streakIconSize * 2),
                             Text(
                               'Арабские буквы',
                               style: TextStyle(
@@ -332,7 +315,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-
                       Container(
                         margin: const EdgeInsets.symmetric(vertical: 6.0),
                         child: Row(
@@ -345,20 +327,20 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               decoration: BoxDecoration(
                                 color: isDark
-                                    ? Colors.orange.shade900.withOpacity(0.35)
+                                    ? Colors.orange.shade900.withValues(alpha: 0.35)
                                     : const Color(0xFFFFF7ED),
                                 borderRadius: BorderRadius.circular(24.0),
                                 border: Border.all(
                                   color: isDark
-                                      ? Colors.orange.shade700.withOpacity(0.5)
+                                      ? Colors.orange.shade700.withValues(alpha: 0.5)
                                       : const Color(0xFFFFEDD5),
                                   width: 1.5,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: isDark
-                                        ? Colors.orange.shade900.withOpacity(0.2)
-                                        : Colors.orange.shade100.withOpacity(0.5),
+                                        ? Colors.orange.shade900.withValues(alpha: 0.2)
+                                        : Colors.orange.shade100.withValues(alpha: 0.5),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),
@@ -392,20 +374,20 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               decoration: BoxDecoration(
                                 color: isDark
-                                    ? Colors.amber.shade900.withOpacity(0.35)
+                                    ? Colors.amber.shade900.withValues(alpha: 0.35)
                                     : const Color(0xFFFEF3C7),
                                 borderRadius: BorderRadius.circular(24.0),
                                 border: Border.all(
                                   color: isDark
-                                      ? Colors.amber.shade700.withOpacity(0.5)
+                                      ? Colors.amber.shade700.withValues(alpha: 0.5)
                                       : const Color(0xFFFDE68A),
                                   width: 1.5,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: isDark
-                                        ? Colors.amber.shade900.withOpacity(0.2)
-                                        : Colors.amber.shade100.withOpacity(0.5),
+                                        ? Colors.amber.shade900.withValues(alpha: 0.2)
+                                        : Colors.amber.shade100.withValues(alpha: 0.5),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),
@@ -434,7 +416,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-
                       Expanded(
                         child: _isLoading
                             ? Center(
@@ -454,7 +435,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                         setState(() {
                                           _currentIndex = index;
                                         });
-                                        _updateHomeWidget(index);
                                       },
                                       itemBuilder: (context, index) {
                                         final letterData = _lettersData[index];
@@ -504,21 +484,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 MaterialPageRoute(
                                                   builder: (context) => DetailScreen(
                                                     letterData: letterData,
-                                                    allLetters: _lettersData,
-                                                    currentIndex: index,
                                                   ),
                                                 ),
                                               );
                                               if (!mounted) return;
                                               setState(() {});
-                                              _updateHomeWidget(index);
                                             },
                                           ),
                                         );
                                       },
                                     ),
                                   ),
-
                                   if (_currentIndex > 0)
                                     Align(
                                       alignment: Alignment.centerLeft,
@@ -534,7 +510,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       ),
                                     ),
-
                                   if (_currentIndex < _lettersData.length - 1)
                                     Align(
                                       alignment: Alignment.centerRight,
@@ -582,11 +557,11 @@ class _CarouselArrowButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withOpacity(0.12) : Colors.teal.shade800.withOpacity(0.85),
+        color: isDark ? Colors.white.withValues(alpha: 0.12) : Colors.teal.shade800.withValues(alpha: 0.85),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -643,19 +618,19 @@ class LessonCardButton extends StatelessWidget {
     return FutureBuilder<double>(
       future: SettingsService.instance.getLessonProgress(letterData.id),
       builder: (context, snapshot) {
-        double progress = snapshot.data ?? 0.0;
+        final double progress = snapshot.data ?? 0.0;
 
         final List<Color> cardGradient = isLocked
             ? (isDark
-                ? [Colors.white.withOpacity(0.08), Colors.white.withOpacity(0.03)]
+                ? [Colors.white.withValues(alpha: 0.08), Colors.white.withValues(alpha: 0.03)]
                 : [const Color(0xFFE2E8F0), const Color(0xFFCBD5E1)])
             : (isDark
                 ? const [Color(0xFF1F4037), Color(0xFF99F2C8)]
                 : const [Color(0xFFFFFFFF), Color(0xFFF0FDF4)]);
 
         final Color borderColor = isLocked
-            ? (isDark ? Colors.white.withOpacity(0.12) : const Color(0xFF94A3B8))
-            : (isDark ? const Color(0xFF99F2C8).withOpacity(0.6) : const Color(0xFF10B981));
+            ? (isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFF94A3B8))
+            : (isDark ? const Color(0xFF99F2C8).withValues(alpha: 0.6) : const Color(0xFF10B981));
 
         return Center(
           child: ConstrainedBox(
@@ -674,10 +649,10 @@ class LessonCardButton extends StatelessWidget {
                   boxShadow: [
                     BoxShadow(
                       color: isDark
-                          ? (isLocked ? Colors.black.withOpacity(0.2) : const Color(0xFF99F2C8).withOpacity(0.2))
+                          ? (isLocked ? Colors.black.withValues(alpha: 0.2) : const Color(0xFF99F2C8).withValues(alpha: 0.2))
                           : (isLocked 
-                              ? Colors.black.withOpacity(0.06) 
-                              : const Color(0xFF059669).withOpacity(0.22)),
+                              ? Colors.black.withValues(alpha: 0.06) 
+                              : const Color(0xFF059669).withValues(alpha: 0.22)),
                       blurRadius: isDark ? 20 : 24,
                       spreadRadius: isDark ? 1 : 2,
                       offset: const Offset(0, 10),
@@ -699,7 +674,7 @@ class LessonCardButton extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? (isLocked ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.25))
+                                  ? (isLocked ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.25))
                                   : (isLocked ? const Color(0xFFCBD5E1) : const Color(0xFF10B981)),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -727,13 +702,12 @@ class LessonCardButton extends StatelessWidget {
                                 : CircularProgressIndicator(
                                     value: progress,
                                     strokeWidth: 3.0,
-                                    backgroundColor: isDark ? Colors.white.withOpacity(0.2) : const Color(0xFFA7F3D0),
+                                    backgroundColor: isDark ? Colors.white.withValues(alpha: 0.2) : const Color(0xFFA7F3D0),
                                     color: isDark ? Colors.white : const Color(0xFF059669),
                                   ),
                           ),
                         ],
                       ),
-
                       Expanded(
                         child: isLocked
                             ? Column(
@@ -744,11 +718,11 @@ class LessonCardButton extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: isDark 
-                                          ? Colors.amber.withOpacity(0.15) 
+                                          ? Colors.amber.withValues(alpha: 0.15) 
                                           : const Color(0xFFFEF3C7),
                                       border: Border.all(
                                         color: isDark 
-                                            ? Colors.amber.withOpacity(0.4) 
+                                            ? Colors.amber.withValues(alpha: 0.4) 
                                             : const Color(0xFFF59E0B),
                                         width: 2,
                                       ),
@@ -764,7 +738,7 @@ class LessonCardButton extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: isDark 
-                                          ? Colors.amber.withOpacity(0.2) 
+                                          ? Colors.amber.withValues(alpha: 0.2) 
                                           : const Color(0xFFFDE68A),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -808,12 +782,12 @@ class LessonCardButton extends StatelessWidget {
                                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                                       decoration: BoxDecoration(
                                         color: isDark 
-                                            ? Colors.black.withOpacity(0.2) 
+                                            ? Colors.black.withValues(alpha: 0.2) 
                                             : const Color(0xFFD1FAE5),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: isDark 
-                                              ? Colors.white.withOpacity(0.2) 
+                                              ? Colors.white.withValues(alpha: 0.2) 
                                               : const Color(0xFF6EE7B7),
                                           width: 1.2,
                                         ),
@@ -832,9 +806,7 @@ class LessonCardButton extends StatelessWidget {
                                 ],
                               ),
                       ),
-
                       const SizedBox(height: 6),
-
                       Text(
                         isLocked ? 'Доступно в Premium' : letterData.title,
                         textAlign: TextAlign.center,
@@ -845,7 +817,7 @@ class LessonCardButton extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                           color: isLocked
                               ? (isDark ? Colors.white38 : const Color(0xFF64748B))
-                              : (isDark ? Colors.white.withOpacity(0.9) : const Color(0xFF064E3B)),
+                              : (isDark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF064E3B)),
                         ),
                       ),
                     ],

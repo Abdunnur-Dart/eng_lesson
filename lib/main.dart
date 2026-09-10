@@ -1,18 +1,24 @@
+import 'dart:async';
+import 'package:app_links/app_links.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
+import 'screens/auth_payment_screen.dart';
 import 'screens/home_screen.dart';
-import 'services/settings_service.dart';
 import 'services/analytics_service.dart';
-import 'services/fcm_service.dart'; // Убедись, что путь к твоему сервису верный
+import 'services/fcm_service.dart';
+import 'services/settings_service.dart';
+
+// Глобальный ключ для управления навигацией вне контекста виджетов
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Инициализация Firebase (с защитой, если вдруг уже инициализирован)
+  // 1. Инициализация Firebase
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -22,24 +28,20 @@ void main() async {
   // 2. Инициализация сервиса уведомлений (FCM + локальная шторка)
   await FcmService().init();
 
-  // 3. Вывод FCM-токена в консоль для тестов
+  // 3. Вывод FCM токена в консоль для тестирования
   await _printFcmToken();
 
-  // 4. Настройка устойчивости Firestore (актуально для оффлайна / WayDroid)
+  // 4. Настройка устойчивости Firestore (оффлайн + SSL)
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-  );
-FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: true,
     sslEnabled: true,
-    // Некоторые версии SDK поддерживают явное переключение, но если выдает ошибку,
-    // проверьте инициализацию ниже:
   );
+
   runApp(const MyApp());
 }
 
-// Отдельная функция для получения и вывода токена
+// Функция для получения и вывода FCM токена
 Future<void> _printFcmToken() async {
   try {
     String? token = await FirebaseMessaging.instance.getToken();
@@ -50,13 +52,69 @@ Future<void> _printFcmToken() async {
     }
   } catch (e) {
     if (kDebugMode) {
-      print("Ошибка при получении токена: $e");
+      print("Ошибка при получении токена FCM: $e");
     }
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  void _initDeepLinks() {
+    _appLinks = AppLinks();
+
+    // 1. Обработка ссылки при холодном запуске (приложение закрыто)
+    _appLinks.getInitialLink().then((uri) {
+      if (uri != null) _handleUri(uri);
+    });
+
+    // 2. Обработка ссылки при горячем запуске (приложение свернуто)
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      _handleUri(uri);
+    });
+  }
+
+  void _handleUri(Uri uri) {
+    if (kDebugMode) {
+      print("--------------------------------------------------");
+      print("DEEP LINK RECEIVED: $uri");
+      print("Scheme: ${uri.scheme}, Host: ${uri.host}, Path: ${uri.path}");
+      print("--------------------------------------------------");
+    }
+
+    if ((uri.scheme == 'arabicletters' || uri.scheme == 'muallimsani') &&
+        (uri.host == 'paywall' || uri.path.contains('paywall'))) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (navigatorKey.currentState != null) {
+          navigatorKey.currentState!.push(
+            MaterialPageRoute(builder: (_) => const AuthPaymentScreen()),
+          );
+        } else {
+          if (kDebugMode) print("Ошибка: navigatorKey.currentState равен null");
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +124,7 @@ class MyApp extends StatelessWidget {
         final isDark = SettingsService.instance.isDarkMode;
 
         return MaterialApp(
+          navigatorKey: navigatorKey,
           title: 'Арабские буквы',
           navigatorObservers: [
             AnalyticsService.instance.observer,

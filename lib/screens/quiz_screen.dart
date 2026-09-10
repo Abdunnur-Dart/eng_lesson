@@ -179,7 +179,7 @@ class _QuizScreenState extends State<QuizScreen> {
         color: isDark ? const Color(0xFF1A2621) : Colors.amber.shade50,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.amber.shade600.withOpacity(0.5),
+          color: Colors.amber.shade600.withValues(alpha: 0.5),
           width: 1.5,
         ),
       ),
@@ -326,7 +326,7 @@ class _QuizScreenState extends State<QuizScreen> {
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withValues(alpha: 0.4),
               blurRadius: 30,
               offset: const Offset(0, 14),
             ),
@@ -342,7 +342,7 @@ class _QuizScreenState extends State<QuizScreen> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: resultColor.withOpacity(0.15),
+                          color: resultColor.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(iconData, size: isTablet ? 52 : 40, color: resultColor),
@@ -392,7 +392,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: resultColor.withOpacity(0.15),
+                      color: resultColor.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(iconData, size: 48, color: resultColor),
@@ -680,7 +680,7 @@ class _QuizScreenState extends State<QuizScreen> {
               if (_isFinished) ...[
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withOpacity(0.65),
+                    color: Colors.black.withValues(alpha: 0.65),
                   ),
                 ),
                 if (percentage >= 70) const Positioned.fill(child: _ConfettiWidget()),
@@ -791,7 +791,7 @@ class _ConfettiPainter extends CustomPainter {
       final double currentY = (particle.startY + particle.vy * progress) * size.height;
       final double opacity = (1.0 - (progress * 0.85)).clamp(0.0, 1.0);
 
-      paint.color = particle.color.withOpacity(opacity);
+      paint.color = particle.color.withValues(alpha: opacity);
 
       canvas.save();
       canvas.translate(currentX, currentY);
