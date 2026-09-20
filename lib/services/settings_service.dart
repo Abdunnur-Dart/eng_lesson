@@ -1,21 +1,21 @@
 import 'dart:async';
+import 'package:arabic/services/subscription_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart'; // NEW
-import 'subscription_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class SettingsService extends ChangeNotifier {
   static final SettingsService instance = SettingsService._internal();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance; // NEW
+  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
 
   StreamSubscription<DocumentSnapshot>? _userDocSubscription;
   StreamSubscription<DocumentSnapshot>? _announcementSubscription;
-  StreamSubscription<String>? _fcmTokenSubscription; // NEW
+  StreamSubscription<String>? _fcmTokenSubscription;
 
   SettingsService._internal() {
     _init();
@@ -28,7 +28,7 @@ class SettingsService extends ChangeNotifier {
   int _streakCount = 0;
   String? _lastActivityDate;
   String? _lastLoginDate;
-  String? _fcmToken; // NEW
+  String? _fcmToken;
 
   int _totalPoints = 0;
   final Map<int, int> _lessonBestScores = {};
@@ -41,7 +41,7 @@ class SettingsService extends ChangeNotifier {
   int get streakCount => _streakCount;
   int get totalPoints => _totalPoints;
   String? get lastLoginDate => _lastLoginDate;
-  String? get fcmToken => _fcmToken; // NEW
+  String? get fcmToken => _fcmToken;
   Map<String, dynamic>? get announcementData => _announcementData;
 
   void _init() {
@@ -57,7 +57,7 @@ class SettingsService extends ChangeNotifier {
       if (user != null) {
         _listenFirestoreUserData(user.uid);
         updateLastLogin();
-        updateFcmToken(); // NEW: обновляем FCM токен при входе
+        updateFcmToken();
       } else {
         clearUserDataOnSignOut();
       }
@@ -100,14 +100,16 @@ class SettingsService extends ChangeNotifier {
         if (data != null && data.containsKey('streakCount')) {
           final firestoreStreak = (data['streakCount'] as num?)?.toInt() ?? 0;
           final firestoreLastDate = data['lastActivityDate'] as String?;
-          if (firestoreStreak > _streakCount) {
-            _streakCount = firestoreStreak;
-            _lastActivityDate = firestoreLastDate;
+          // CHANGED: Валидируем и принимаем стрик из Firestore, чтобы актуализировать данные даже при сбросе/актуализации с других устройств
+          if (firestoreStreak != _streakCount || firestoreLastDate != _lastActivityDate) { // CHANGED
+            _streakCount = firestoreStreak; // CHANGED
+            _lastActivityDate = firestoreLastDate; // CHANGED
             final prefs = await SharedPreferences.getInstance();
             await prefs.setInt('streakCount', _streakCount);
             if (_lastActivityDate != null) {
               await prefs.setString('lastActivityDate', _lastActivityDate!);
             }
+            _checkStreakExpiration(); // NEW: Проверяем не просрочен ли стрик из базы
             notifyListeners();
           }
         }
@@ -159,10 +161,8 @@ class SettingsService extends ChangeNotifier {
     }
   }
 
-  // NEW: Метод для получения и сохранения FCM токена
   Future<void> updateFcmToken() async {
     try {
-      // Запрашиваем разрешения для push-уведомлений
       NotificationSettings settings = await _messaging.requestPermission(
         alert: true,
         badge: true,
@@ -178,7 +178,6 @@ class SettingsService extends ChangeNotifier {
           await _saveFcmTokenToFirestore(token);
         }
 
-        // Подписываемся на смену токена в процессе работы приложения
         _fcmTokenSubscription?.cancel();
         _fcmTokenSubscription = _messaging.onTokenRefresh.listen((newToken) async {
           _fcmToken = newToken;
@@ -190,7 +189,6 @@ class SettingsService extends ChangeNotifier {
     }
   }
 
-  // NEW: Вспомогательный метод сохранения токена в документе пользователя
   Future<void> _saveFcmTokenToFirestore(String token) async {
     final currentUser = _auth.currentUser;
     if (currentUser != null) {
@@ -226,12 +224,12 @@ class SettingsService extends ChangeNotifier {
   }
 
   Future<void> clearUserDataOnSignOut() async {
-    _fcmTokenSubscription?.cancel(); // NEW
+    _fcmTokenSubscription?.cancel();
     _isPremium = false;
     _streakCount = 0;
     _lastActivityDate = null;
     _lastLoginDate = null;
-    _fcmToken = null; // NEW
+    _fcmToken = null;
     _totalPoints = 0;
     _lessonBestScores.clear();
 
@@ -277,15 +275,28 @@ class SettingsService extends ChangeNotifier {
   }
 
   void _checkStreakExpiration() {
-    if (_lastActivityDate != null) {
+    if (_lastActivityDate != null && _streakCount > 0) { // CHANGED
       try {
         final now = DateTime.now();
         final todayDate = DateTime(now.year, now.month, now.day);
-        final lastDateParsed = DateTime.parse(_lastActivityDate!);
-        final lastDate = DateTime(lastDateParsed.year, lastDateParsed.month, lastDateParsed.day);
+        
+        // CHANGED: Безопасный парсинг даты формата YYYY-MM-DD или ISO8601
+        final parts = _lastActivityDate!.split('-'); // CHANGED
+        DateTime lastDate; // NEW
+        if (parts.length >= 3) { // NEW
+          final year = int.parse(parts[0]); // NEW
+          final month = int.parse(parts[1]); // NEW
+          final day = int.parse(parts[2].substring(0, 2)); // NEW
+          lastDate = DateTime(year, month, day); // NEW
+        } else { // NEW
+          final lastDateParsed = DateTime.parse(_lastActivityDate!); // NEW
+          lastDate = DateTime(lastDateParsed.year, lastDateParsed.month, lastDateParsed.day); // NEW
+        } // NEW
+
         final difference = todayDate.difference(lastDate).inDays;
         if (difference > 1) {
           _streakCount = 0;
+          _saveStreakToStorageAndFirestore(); // NEW: Записываем сброшенный стрик в локальное хранилище и Firestore
         }
       } catch (e) {
         debugPrint('Ошибка проверки стрика: $e');
@@ -293,19 +304,51 @@ class SettingsService extends ChangeNotifier {
     }
   }
 
+  // NEW: Вспомогательный метод синхронизации стрика с хранилищем и Firestore
+  Future<void> _saveStreakToStorageAndFirestore() async { // NEW
+    final prefs = await SharedPreferences.getInstance(); // NEW
+    await prefs.setInt('streakCount', _streakCount); // NEW
+    if (_lastActivityDate != null) { // NEW
+      await prefs.setString('lastActivityDate', _lastActivityDate!); // NEW
+    } // NEW
+    notifyListeners(); // NEW
+
+    final currentUser = _auth.currentUser; // NEW
+    if (currentUser != null) { // NEW
+      try { // NEW
+        await _firestore.collection('users').doc(currentUser.uid).set({ // NEW
+          'streakCount': _streakCount, // NEW
+          'lastActivityDate': _lastActivityDate, // NEW
+        }, SetOptions(merge: true)); // NEW
+      } catch (e) { // NEW
+        debugPrint('Ошибка сохранения сброса стрика в Firestore: $e'); // NEW
+      } // NEW
+    } // NEW
+  } // NEW
+
   Future<void> updateStreak() async {
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
     final todayStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
     
-    if (_lastActivityDate == todayStr) {
+    if (_lastActivityDate == todayStr && _streakCount > 0) { // CHANGED: Проверяем, что дата совпадает и стрик уже активен
       return;
     }
 
-    if (_lastActivityDate != null) {
+    if (_lastActivityDate != null && _streakCount > 0) { // CHANGED
       try {
-        final lastDateParsed = DateTime.parse(_lastActivityDate!);
-        final lastDate = DateTime(lastDateParsed.year, lastDateParsed.month, lastDateParsed.day);
+        final parts = _lastActivityDate!.split('-'); // CHANGED
+        DateTime lastDate; // NEW
+        if (parts.length >= 3) { // NEW
+          final year = int.parse(parts[0]); // NEW
+          final month = int.parse(parts[1]); // NEW
+          final day = int.parse(parts[2].substring(0, 2)); // NEW
+          lastDate = DateTime(year, month, day); // NEW
+        } else { // NEW
+          final lastDateParsed = DateTime.parse(_lastActivityDate!); // NEW
+          lastDate = DateTime(lastDateParsed.year, lastDateParsed.month, lastDateParsed.day); // NEW
+        } // NEW
+        
         final todayDate = DateTime(now.year, now.month, now.day);
         final difference = todayDate.difference(lastDate).inDays;
 
@@ -467,7 +510,7 @@ class SettingsService extends ChangeNotifier {
   void dispose() {
     _userDocSubscription?.cancel();
     _announcementSubscription?.cancel();
-    _fcmTokenSubscription?.cancel(); // NEW
+    _fcmTokenSubscription?.cancel();
     super.dispose();
   }
 }

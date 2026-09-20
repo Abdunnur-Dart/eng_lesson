@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -25,13 +26,23 @@ void main() async {
     );
   }
 
-  // 2. Инициализация сервиса уведомлений (FCM + локальная шторка)
+  // 2. Инициализация Firebase App Check
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: kDebugMode
+        ? AndroidProvider.debug
+        : AndroidProvider.playIntegrity,
+    appleProvider: kDebugMode
+        ? AppleProvider.debug
+        : AppleProvider.deviceCheck,
+  );
+
+  // 3. Инициализация сервиса уведомлений (FCM + локальная шторка)
   await FcmService().init();
 
-  // 3. Вывод FCM токена в консоль для тестирования
+  // 4. Вывод FCM токена в консоль для тестирования
   await _printFcmToken();
 
-  // 4. Настройка устойчивости Firestore (оффлайн + SSL)
+  // 5. Настройка устойчивости Firestore (оффлайн + SSL)
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
@@ -72,7 +83,12 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _initDeepLinks();
+
   }
+
+  // Показ диалога с перенаправлением в отдельное приложение RuStore // CHANGED
+  // Показ диалога с перенаправлением в отдельное приложение RuStore // CHANGED
+ 
 
   void _initDeepLinks() {
     _appLinks = AppLinks();
