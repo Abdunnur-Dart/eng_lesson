@@ -31,6 +31,11 @@ class SettingsService extends ChangeNotifier {
   String? _fcmToken;
 
   int _totalPoints = 0;
+  int _weeklyPoints = 0;
+  int _lastWeekNumber = 0;
+  String? _displayName;
+  bool _hasRequestedReview = false; // NEW: Поле для отслеживания запроса отзыва
+
   final Map<int, int> _lessonBestScores = {};
   Map<String, dynamic>? _announcementData;
 
@@ -40,9 +45,12 @@ class SettingsService extends ChangeNotifier {
   bool get isPremium => _isPremium;
   int get streakCount => _streakCount;
   int get totalPoints => _totalPoints;
+  int get weeklyPoints => _weeklyPoints;
+  String? get displayName => _displayName;
   String? get lastLoginDate => _lastLoginDate;
   String? get fcmToken => _fcmToken;
   Map<String, dynamic>? get announcementData => _announcementData;
+  bool get hasRequestedReview => _hasRequestedReview; // NEW: Геттер для проверки
 
   void _init() {
     _loadSettings();
@@ -100,16 +108,15 @@ class SettingsService extends ChangeNotifier {
         if (data != null && data.containsKey('streakCount')) {
           final firestoreStreak = (data['streakCount'] as num?)?.toInt() ?? 0;
           final firestoreLastDate = data['lastActivityDate'] as String?;
-          // CHANGED: Валидируем и принимаем стрик из Firestore, чтобы актуализировать данные даже при сбросе/актуализации с других устройств
-          if (firestoreStreak != _streakCount || firestoreLastDate != _lastActivityDate) { // CHANGED
-            _streakCount = firestoreStreak; // CHANGED
-            _lastActivityDate = firestoreLastDate; // CHANGED
+          if (firestoreStreak != _streakCount || firestoreLastDate != _lastActivityDate) {
+            _streakCount = firestoreStreak;
+            _lastActivityDate = firestoreLastDate;
             final prefs = await SharedPreferences.getInstance();
             await prefs.setInt('streakCount', _streakCount);
             if (_lastActivityDate != null) {
               await prefs.setString('lastActivityDate', _lastActivityDate!);
             }
-            _checkStreakExpiration(); // NEW: Проверяем не просрочен ли стрик из базы
+            _checkStreakExpiration();
             notifyListeners();
           }
         }
@@ -123,10 +130,45 @@ class SettingsService extends ChangeNotifier {
             notifyListeners();
           }
         }
+
+        if (data != null && data.containsKey('displayName')) {
+          _displayName = data['displayName'] as String?;
+          notifyListeners();
+        }
+
+        if (data != null && data.containsKey('weeklyPoints')) {
+          _weeklyPoints = (data['weeklyPoints'] as num?)?.toInt() ?? 0;
+        }
       }
     });
 
     _syncProgressWithFirestore(uid);
+  }
+
+  Future<void> setDisplayName(String name) async {
+    _displayName = name;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_display_name', name);
+    notifyListeners();
+
+    final currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      try {
+        await _firestore.collection('users').doc(currentUser.uid).set({
+          'displayName': name,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Ошибка сохранения имени в Firestore: $e');
+      }
+    }
+  }
+
+  // NEW: Метод сохранения статуса запроса отзыва
+  Future<void> setHasRequestedReview(bool value) async {
+    _hasRequestedReview = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_requested_review', value);
+    notifyListeners();
   }
 
   Future<void> _syncProgressWithFirestore(String uid) async {
@@ -216,6 +258,7 @@ class SettingsService extends ChangeNotifier {
         await _firestore.collection('users').doc(currentUser.uid).set({
           'lastLoginAt': FieldValue.serverTimestamp(),
           'lastLoginDate': nowIso,
+          'email': currentUser.email ?? '',
         }, SetOptions(merge: true));
       } catch (e) {
         debugPrint('Ошибка сохранения даты входа в Firestore: $e');
@@ -231,6 +274,9 @@ class SettingsService extends ChangeNotifier {
     _lastLoginDate = null;
     _fcmToken = null;
     _totalPoints = 0;
+    _weeklyPoints = 0;
+    _displayName = null;
+    _hasRequestedReview = false; // Очищаем локально тоже при выходе (опционально)
     _lessonBestScores.clear();
 
     final prefs = await SharedPreferences.getInstance();
@@ -239,6 +285,8 @@ class SettingsService extends ChangeNotifier {
     await prefs.remove('lastActivityDate');
     await prefs.remove('lastLoginDate');
     await prefs.remove('total_user_points');
+    await prefs.remove('weekly_user_points');
+    await prefs.remove('user_display_name');
     
     final keys = prefs.getKeys();
     for (String key in keys) {
@@ -259,44 +307,56 @@ class SettingsService extends ChangeNotifier {
     _lastActivityDate = prefs.getString('lastActivityDate');
     _lastLoginDate = prefs.getString('lastLoginDate');
     _totalPoints = prefs.getInt('total_user_points') ?? 0;
+    _weeklyPoints = prefs.getInt('weekly_user_points') ?? 0;
+    _lastWeekNumber = prefs.getInt('last_week_number') ?? 0;
+    _displayName = prefs.getString('user_display_name');
+    _hasRequestedReview = prefs.getBool('has_requested_review') ?? false; // NEW: Загружаем статус отзыва
 
-    final keys = prefs.getKeys();
-    for (String key in keys) {
-      if (key.startsWith('lesson_best_')) {
-        final lessonId = int.tryParse(key.replaceFirst('lesson_best_', ''));
-        if (lessonId != null) {
-          _lessonBestScores[lessonId] = prefs.getInt(key) ?? 0;
-        }
-      }
-    }
-
+    _checkWeeklyReset();
     _checkStreakExpiration();
     notifyListeners();
   }
 
+  void _checkWeeklyReset() {
+    final now = DateTime.now();
+    final currentWeekNumber = _getWeekOfYear(now);
+    if (_lastWeekNumber != currentWeekNumber) {
+      _weeklyPoints = 0;
+      _lastWeekNumber = currentWeekNumber;
+      SharedPreferences.getInstance().then((prefs) {
+        prefs.setInt('weekly_user_points', 0);
+        prefs.setInt('last_week_number', currentWeekNumber);
+      });
+    }
+  }
+
+  int _getWeekOfYear(DateTime date) {
+    final dayOfYear = int.parse("${date.year}${date.difference(DateTime(date.year, 1, 1)).inDays}");
+    return (dayOfYear / 7).ceil();
+  }
+
   void _checkStreakExpiration() {
-    if (_lastActivityDate != null && _streakCount > 0) { // CHANGED
+    if (_lastActivityDate != null && _streakCount > 0) {
       try {
         final now = DateTime.now();
         final todayDate = DateTime(now.year, now.month, now.day);
         
-        // CHANGED: Безопасный парсинг даты формата YYYY-MM-DD или ISO8601
-        final parts = _lastActivityDate!.split('-'); // CHANGED
-        DateTime lastDate; // NEW
-        if (parts.length >= 3) { // NEW
-          final year = int.parse(parts[0]); // NEW
-          final month = int.parse(parts[1]); // NEW
-          final day = int.parse(parts[2].substring(0, 2)); // NEW
-          lastDate = DateTime(year, month, day); // NEW
-        } else { // NEW
-          final lastDateParsed = DateTime.parse(_lastActivityDate!); // NEW
-          lastDate = DateTime(lastDateParsed.year, lastDateParsed.month, lastDateParsed.day); // NEW
-        } // NEW
+        final parts = _lastActivityDate!.split('-');
+        DateTime lastDate;
+        if (parts.length >= 3) {
+          final year = int.parse(parts[0]);
+          final month = int.parse(parts[1]);
+          final day = int.parse(parts[2].substring(0, 2));
+          lastDate = DateTime(year, month, day);
+        } else {
+          final lastDateParsed = DateTime.parse(_lastActivityDate!);
+          lastDate = DateTime(lastDateParsed.year, lastDateParsed.month, lastDateParsed.day);
+        }
 
         final difference = todayDate.difference(lastDate).inDays;
         if (difference > 1) {
           _streakCount = 0;
-          _saveStreakToStorageAndFirestore(); // NEW: Записываем сброшенный стрик в локальное хранилище и Firestore
+          _saveStreakToStorageAndFirestore();
         }
       } catch (e) {
         debugPrint('Ошибка проверки стрика: $e');
@@ -304,50 +364,49 @@ class SettingsService extends ChangeNotifier {
     }
   }
 
-  // NEW: Вспомогательный метод синхронизации стрика с хранилищем и Firestore
-  Future<void> _saveStreakToStorageAndFirestore() async { // NEW
-    final prefs = await SharedPreferences.getInstance(); // NEW
-    await prefs.setInt('streakCount', _streakCount); // NEW
-    if (_lastActivityDate != null) { // NEW
-      await prefs.setString('lastActivityDate', _lastActivityDate!); // NEW
-    } // NEW
-    notifyListeners(); // NEW
+  Future<void> _saveStreakToStorageAndFirestore() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('streakCount', _streakCount);
+    if (_lastActivityDate != null) {
+      await prefs.setString('lastActivityDate', _lastActivityDate!);
+    }
+    notifyListeners();
 
-    final currentUser = _auth.currentUser; // NEW
-    if (currentUser != null) { // NEW
-      try { // NEW
-        await _firestore.collection('users').doc(currentUser.uid).set({ // NEW
-          'streakCount': _streakCount, // NEW
-          'lastActivityDate': _lastActivityDate, // NEW
-        }, SetOptions(merge: true)); // NEW
-      } catch (e) { // NEW
-        debugPrint('Ошибка сохранения сброса стрика в Firestore: $e'); // NEW
-      } // NEW
-    } // NEW
-  } // NEW
+    final currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      try {
+        await _firestore.collection('users').doc(currentUser.uid).set({
+          'streakCount': _streakCount,
+          'lastActivityDate': _lastActivityDate,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        debugPrint('Ошибка сохранения сброса стрика в Firestore: $e');
+      }
+    }
+  }
 
   Future<void> updateStreak() async {
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
     final todayStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
     
-    if (_lastActivityDate == todayStr && _streakCount > 0) { // CHANGED: Проверяем, что дата совпадает и стрик уже активен
+    if (_lastActivityDate == todayStr && _streakCount > 0) {
       return;
     }
 
-    if (_lastActivityDate != null && _streakCount > 0) { // CHANGED
+    if (_lastActivityDate != null && _streakCount > 0) {
       try {
-        final parts = _lastActivityDate!.split('-'); // CHANGED
-        DateTime lastDate; // NEW
-        if (parts.length >= 3) { // NEW
-          final year = int.parse(parts[0]); // NEW
-          final month = int.parse(parts[1]); // NEW
-          final day = int.parse(parts[2].substring(0, 2)); // NEW
-          lastDate = DateTime(year, month, day); // NEW
-        } else { // NEW
-          final lastDateParsed = DateTime.parse(_lastActivityDate!); // NEW
-          lastDate = DateTime(lastDateParsed.year, lastDateParsed.month, lastDateParsed.day); // NEW
-        } // NEW
+        final parts = _lastActivityDate!.split('-');
+        DateTime lastDate;
+        if (parts.length >= 3) {
+          final year = int.parse(parts[0]);
+          final month = int.parse(parts[1]);
+          final day = int.parse(parts[2].substring(0, 2));
+          lastDate = DateTime(year, month, day);
+        } else {
+          final lastDateParsed = DateTime.parse(_lastActivityDate!);
+          lastDate = DateTime(lastDateParsed.year, lastDateParsed.month, lastDateParsed.day);
+        }
         
         final todayDate = DateTime(now.year, now.month, now.day);
         final difference = todayDate.difference(lastDate).inDays;
@@ -414,9 +473,12 @@ class SettingsService extends ChangeNotifier {
   }
 
   Future<void> addPoints(int points) async {
+    _checkWeeklyReset();
     _totalPoints += points;
+    _weeklyPoints += points;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('total_user_points', _totalPoints);
+    await prefs.setInt('weekly_user_points', _weeklyPoints);
     notifyListeners();
 
     final currentUser = _auth.currentUser;
@@ -424,6 +486,8 @@ class SettingsService extends ChangeNotifier {
       try {
         await _firestore.collection('users').doc(currentUser.uid).set({
           'totalPoints': _totalPoints,
+          'weeklyPoints': _weeklyPoints,
+          'email': currentUser.email ?? '',
         }, SetOptions(merge: true));
       } catch (e) {
         debugPrint('Ошибка сохранения баллов в Firestore: $e');

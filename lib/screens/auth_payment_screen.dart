@@ -243,6 +243,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
+    final accentColor = isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5);
 
     showDialog(
       context: context,
@@ -265,11 +266,11 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.teal.withValues(alpha: 0.2),
+                          color: accentColor.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(Icons.mark_email_read_rounded,
-                            color: isDark ? Colors.tealAccent : Colors.teal, size: 22),
+                            color: accentColor, size: 22),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -299,7 +300,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
                     child: Row(
                       children: [
                         Icon(Icons.email_outlined,
-                            color: isDark ? Colors.tealAccent : Colors.teal, size: 18),
+                            color: accentColor, size: 18),
                         const SizedBox(width: 8),
                         Expanded(
                           child: SelectableText(
@@ -343,7 +344,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.tealAccent : Colors.teal.shade700,
+                                  color: accentColor,
                                 ),
                               ),
                             ),
@@ -367,13 +368,13 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
                                 child: Row(
                                   children: [
                                     Icon(Icons.copy_rounded,
-                                        size: 13, color: isDark ? Colors.tealAccent : Colors.teal.shade700),
+                                        size: 13, color: accentColor),
                                     const SizedBox(width: 4),
                                     Text(
                                       'Скопировать',
                                       style: TextStyle(
                                           fontSize: 11,
-                                          color: isDark ? Colors.tealAccent : Colors.teal.shade700,
+                                          color: accentColor,
                                           fontWeight: FontWeight.bold),
                                     ),
                                   ],
@@ -430,7 +431,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
         : Colors.white.withValues(alpha: 0.6);
 
     final defaultShadow = isDark
-        ? Colors.black.withValues(alpha: 0.15)
+        ? Colors.black.withValues(alpha: 0.18)
         : Colors.blueGrey.withValues(alpha: 0.08);
 
     return ClipRRect(
@@ -455,6 +456,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
                 color: defaultShadow,
                 blurRadius: 16,
                 spreadRadius: 2,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
@@ -468,6 +470,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final primaryColor = isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5);
 
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
@@ -491,7 +494,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
                 child: Container(
                   color: isDark
                       ? Colors.black.withValues(alpha: 0.2)
-                      : Colors.white.withValues(alpha: 0.2),
+                      : Colors.white.withValues(alpha: 0.3),
                 ),
               ),
             ),
@@ -514,10 +517,11 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
             ),
             centerTitle: true,
             toolbarHeight: 46,
+            iconTheme: IconThemeData(color: textColor),
           ),
           body: Stack(
             children: [
-              // Liquid Background Effects
+              // Liquid Background Effects (Deep Indigo / Cyber Palette)
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
@@ -526,44 +530,42 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
                       end: Alignment.bottomRight,
                       colors: isDark
                           ? const [
-                              Color(0xFF0F2027),
-                              Color(0xFF203A43),
-                              Color(0xFF2C5364),
+                              Color(0xFF0F172A),
+                              Color(0xFF1E1B4B),
+                              Color(0xFF09090B),
                             ]
                           : const [
-                              Color(0xFFE0C3FC),
-                              Color(0xFF8EC5FC),
-                              Color(0xFFE0EAFC),
+                              Color(0xFFF8FAFC),
+                              Color(0xFFEEF2FF),
+                              Color(0xFFE0E7FF),
                             ],
                     ),
                   ),
                 ),
               ),
               Positioned(
-                top: -50,
-                right: -50,
+                top: 80,
+                right: -60,
                 child: Container(
-                  width: 250,
-                  height: 250,
+                  width: 240,
+                  height: 240,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isDark
-                        ? Colors.cyanAccent.withValues(alpha: 0.25)
-                        : Colors.blueAccent.withValues(alpha: 0.2),
+                    color: primaryColor.withValues(alpha: 0.2),
                   ),
                 ),
               ),
               Positioned(
-                bottom: -80,
-                left: -50,
+                bottom: 120,
+                left: -80,
                 child: Container(
                   width: 300,
                   height: 300,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: isDark
-                        ? Colors.purpleAccent.withValues(alpha: 0.2)
-                        : Colors.purpleAccent.withValues(alpha: 0.15),
+                        ? const Color(0xFF6366F1).withValues(alpha: 0.15)
+                        : const Color(0xFF818CF8).withValues(alpha: 0.15),
                   ),
                 ),
               ),
@@ -695,7 +697,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
+                      ? Colors.white.withValues(alpha: 0.15)
                       : Colors.black.withValues(alpha: 0.08),
                   foregroundColor: textColor,
                   elevation: 0,
@@ -727,6 +729,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
   Widget _buildPaywallView({User? user}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final accentColor = isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5);
 
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
@@ -822,7 +825,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
                 oldPrice: monthOldPrice != null ? '$monthOldPrice ₽' : null,
                 subtitle: monthSubtitle,
                 icon: Icons.flash_on_rounded,
-                primaryColor: isDark ? Colors.lightBlueAccent : const Color(0xFF0284C7),
+                primaryColor: accentColor,
                 badge: monthBadge,
                 timer: monthTimer,
               ),
@@ -834,7 +837,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
                 oldPrice: yearOldPrice != null ? '$yearOldPrice ₽' : null,
                 subtitle: yearSubtitle,
                 icon: Icons.star_rounded,
-                primaryColor: isDark ? Colors.amberAccent : const Color(0xFFD97706),
+                primaryColor: accentColor,
                 badge: yearBadge,
                 timer: yearTimer,
               ),
@@ -847,7 +850,7 @@ class _AuthPaymentScreenState extends State<AuthPaymentScreen> {
                     lifetimeOldPrice != null ? '$lifetimeOldPrice ₽' : null,
                 subtitle: lifetimeSubtitle,
                 icon: Icons.all_inclusive_rounded,
-                primaryColor: isDark ? Colors.tealAccent : const Color(0xFF0D9488),
+                primaryColor: accentColor,
                 badge: lifetimeBadge,
                 timer: lifetimeTimer,
               ),
@@ -1246,8 +1249,8 @@ class _CountdownTimerWidgetState extends State<CountdownTimerWidget> {
                             ),
                       ),
               ),
-        ],
-      ),
+            ],
+          ),
         ),
       ),
     );

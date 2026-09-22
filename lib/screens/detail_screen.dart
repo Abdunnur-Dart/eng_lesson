@@ -64,10 +64,11 @@ class _DetailScreenState extends State<DetailScreen> {
       extendBodyBehindAppBar: true,
       body: Container(
         decoration: BoxDecoration(
+          // Ультрасовременный сине-фиолетовый космический градиент (НЕ зеленый)
           gradient: LinearGradient(
             colors: isDark
-                ? const [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F2942)]
-                : const [Color(0xFFE2F1E7), Color(0xFFC8E6C9), Color(0xFFE8F5E9)],
+                ? const [Color(0xFF0F172A), Color(0xFF1E1B4B), Color(0xFF09090B)] // Темный индиго/обсидиан
+                : const [Color(0xFFF8FAFC), Color(0xFFEEF2FF), Color(0xFFE0E7FF)], // Светлый жемчужно-лавандовый
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -82,12 +83,12 @@ class _DetailScreenState extends State<DetailScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                     decoration: BoxDecoration(
-                      color: Colors.transparent, // Completely seamless with body
+                      color: Colors.transparent,
                       border: Border(
                         bottom: BorderSide(
                           color: isDark
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : Colors.teal.shade900.withValues(alpha: 0.08),
+                              ? Colors.white.withOpacity(0.08)
+                              : Colors.indigo.shade900.withOpacity(0.08),
                           width: 1.0,
                         ),
                       ),
@@ -96,7 +97,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       children: [
                         IconButton(
                           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                          color: isDark ? Colors.white : const Color(0xFF0F5132),
+                          color: isDark ? Colors.white : const Color(0xFF312E81),
                           onPressed: () => Navigator.pop(context),
                         ),
                         Expanded(
@@ -110,7 +111,7 @@ class _DetailScreenState extends State<DetailScreen> {
                                   fontSize: titleFontSize,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.3,
-                                  color: isDark ? Colors.white : const Color(0xFF0F5132),
+                                  color: isDark ? Colors.white : const Color(0xFF312E81),
                                 ),
                               );
                             },
@@ -129,12 +130,12 @@ class _DetailScreenState extends State<DetailScreen> {
                                   gradient: LinearGradient(
                                     colors: isDark
                                         ? [
-                                            const Color(0xFF10B981).withValues(alpha: 0.25),
-                                            const Color(0xFF059669).withValues(alpha: 0.1)
+                                            const Color(0xFF6366F1).withOpacity(0.25),
+                                            const Color(0xFF4F46E5).withOpacity(0.1)
                                           ]
                                         : [
-                                            Colors.white.withValues(alpha: 0.7),
-                                            Colors.white.withValues(alpha: 0.3)
+                                            Colors.white.withOpacity(0.8),
+                                            Colors.white.withOpacity(0.4)
                                           ],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
@@ -142,13 +143,13 @@ class _DetailScreenState extends State<DetailScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
                                     color: isDark
-                                        ? const Color(0xFF10B981).withValues(alpha: 0.5)
-                                        : const Color(0xFF059669).withValues(alpha: 0.3),
+                                        ? const Color(0xFF818CF8).withOpacity(0.5)
+                                        : const Color(0xFF6366F1).withOpacity(0.3),
                                     width: 1.2,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                      color: const Color(0xFF6366F1).withOpacity(0.15),
                                       blurRadius: 10,
                                       offset: const Offset(0, 2),
                                     ),
@@ -160,13 +161,13 @@ class _DetailScreenState extends State<DetailScreen> {
                                     Icon(
                                       Icons.quiz_rounded,
                                       size: 16,
-                                      color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                                      color: isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5),
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
                                       'ТЕСТЫ',
                                       style: TextStyle(
-                                        color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                                        color: isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5),
                                         fontWeight: FontWeight.w800,
                                         fontSize: btnFontSize,
                                         letterSpacing: 0.8,
@@ -320,15 +321,15 @@ class _PageIndicator extends StatelessWidget {
             width: currentIndex == index ? activeWidth : inactiveWidth,
             decoration: BoxDecoration(
               color: currentIndex == index
-                  ? const Color(0xFF10B981)
+                  ? const Color(0xFF6366F1) // Неоновый синий акцент
                   : (isDark
-                      ? Colors.white.withValues(alpha: 0.15)
-                      : Colors.teal.shade900.withValues(alpha: 0.15)),
+                      ? Colors.white.withOpacity(0.15)
+                      : Colors.indigo.shade900.withOpacity(0.15)),
               borderRadius: BorderRadius.circular(10.0),
               boxShadow: currentIndex == index
                   ? [
                       BoxShadow(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.45),
+                        color: const Color(0xFF6366F1).withOpacity(0.45),
                         blurRadius: 10,
                         spreadRadius: 1,
                       )
@@ -381,16 +382,16 @@ class _SymbolCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(32.0),
                 gradient: LinearGradient(
                   colors: isDark
-                      ? [Colors.white.withValues(alpha: 0.18), Colors.white.withValues(alpha: 0.04)]
-                      : [Colors.white.withValues(alpha: 0.75), Colors.white.withValues(alpha: 0.35)],
+                      ? [Colors.white.withOpacity(0.15), Colors.white.withOpacity(0.03)]
+                      : [Colors.white.withOpacity(0.85), Colors.white.withOpacity(0.45)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: isDark
-                        ? Colors.black.withValues(alpha: 0.35)
-                        : Colors.teal.shade900.withValues(alpha: 0.12),
+                        ? Colors.black.withOpacity(0.4)
+                        : Colors.indigo.shade900.withOpacity(0.1),
                     blurRadius: 28,
                     spreadRadius: 1,
                     offset: const Offset(0, 12),
@@ -398,8 +399,8 @@ class _SymbolCard extends StatelessWidget {
                 ],
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.3)
-                      : Colors.white.withValues(alpha: 0.9),
+                      ? Colors.white.withOpacity(0.25)
+                      : Colors.white.withOpacity(0.9),
                   width: 1.5,
                 ),
               ),
@@ -414,12 +415,12 @@ class _SymbolCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 200,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : const Color(0xFF064E3B),
+                            color: isDark ? Colors.white : const Color(0xFF312E81),
                             shadows: [
                               Shadow(
                                 color: isDark
-                                    ? Colors.black.withValues(alpha: 0.3)
-                                    : Colors.teal.shade900.withValues(alpha: 0.15),
+                                    ? Colors.black.withOpacity(0.3)
+                                    : Colors.indigo.shade900.withOpacity(0.15),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -438,13 +439,13 @@ class _SymbolCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? Colors.black.withValues(alpha: 0.3)
-                            : Colors.white.withValues(alpha: 0.65),
+                            ? Colors.black.withOpacity(0.3)
+                            : Colors.white.withOpacity(0.75),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: isDark
-                              ? Colors.white.withValues(alpha: 0.2)
-                              : Colors.white.withValues(alpha: 0.9),
+                              ? Colors.white.withOpacity(0.2)
+                              : Colors.white.withOpacity(0.9),
                           width: 1.2,
                         ),
                       ),
@@ -454,7 +455,7 @@ class _SymbolCard extends StatelessWidget {
                           fontSize: transcriptionFontSize,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.5,
-                          color: isDark ? const Color(0xFF34D399) : const Color(0xFF047857),
+                          color: isDark ? const Color(0xFF818CF8) : const Color(0xFF4338CA),
                         ),
                       ),
                     ),
@@ -501,20 +502,20 @@ class _DescriptionSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24.0),
                 gradient: LinearGradient(
                   colors: isDark
-                      ? [Colors.white.withValues(alpha: 0.14), Colors.white.withValues(alpha: 0.03)]
-                      : [Colors.white.withValues(alpha: 0.65), Colors.white.withValues(alpha: 0.3)],
+                      ? [Colors.white.withOpacity(0.12), Colors.white.withOpacity(0.02)]
+                      : [Colors.white.withOpacity(0.75), Colors.white.withOpacity(0.35)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 border: Border.all(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.25)
-                      : Colors.white.withValues(alpha: 0.8),
+                      ? Colors.white.withOpacity(0.2)
+                      : Colors.white.withOpacity(0.8),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withOpacity(0.1),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -528,7 +529,7 @@ class _DescriptionSection extends StatelessWidget {
                     style: TextStyle(
                       fontSize: titleFontSize,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? const Color(0xFF34D399) : const Color(0xFF065F46),
+                      color: isDark ? const Color(0xFF818CF8) : const Color(0xFF3730A3),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -537,8 +538,8 @@ class _DescriptionSection extends StatelessWidget {
                     style: TextStyle(
                       fontSize: textFontSize,
                       color: isDark
-                          ? Colors.white.withValues(alpha: 0.85)
-                          : Colors.black.withValues(alpha: 0.8),
+                          ? Colors.white.withOpacity(0.85)
+                          : Colors.black.withOpacity(0.8),
                       height: 1.45,
                     ),
                   ),
@@ -587,12 +588,12 @@ class _BottomNavBar extends StatelessWidget {
             vertical: (screenWidth * 0.02).clamp(10.0, 16.0),
           ),
           decoration: BoxDecoration(
-            color: Colors.transparent, // Completely seamless base
+            color: Colors.transparent,
             border: Border(
               top: BorderSide(
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.teal.shade900.withValues(alpha: 0.08),
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.indigo.shade900.withOpacity(0.08),
                 width: 1.0,
               ),
             ),
@@ -615,15 +616,15 @@ class _BottomNavBar extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: canGoPrev
                           ? (isDark
-                              ? Colors.white.withValues(alpha: 0.12)
-                              : Colors.white.withValues(alpha: 0.6))
+                              ? Colors.white.withOpacity(0.12)
+                              : Colors.white.withOpacity(0.6))
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
                         color: canGoPrev
                             ? (isDark
-                                ? Colors.white.withValues(alpha: 0.25)
-                                : Colors.white.withValues(alpha: 0.9))
+                                ? Colors.white.withOpacity(0.25)
+                                : Colors.white.withOpacity(0.9))
                             : Colors.transparent,
                         width: 1.2,
                       ),
@@ -634,7 +635,7 @@ class _BottomNavBar extends StatelessWidget {
                           Icons.arrow_back_ios_new_rounded,
                           size: iconSize,
                           color: canGoPrev
-                              ? (isDark ? Colors.white : const Color(0xFF0F5132))
+                              ? (isDark ? Colors.white : const Color(0xFF312E81))
                               : (isDark ? Colors.white24 : Colors.grey.shade400),
                         ),
                         const SizedBox(width: 6),
@@ -644,7 +645,7 @@ class _BottomNavBar extends StatelessWidget {
                             fontSize: buttonFontSize,
                             fontWeight: FontWeight.bold,
                             color: canGoPrev
-                                ? (isDark ? Colors.white : const Color(0xFF0F5132))
+                                ? (isDark ? Colors.white : const Color(0xFF312E81))
                                 : (isDark ? Colors.white24 : Colors.grey.shade400),
                           ),
                         ),
@@ -653,7 +654,7 @@ class _BottomNavBar extends StatelessWidget {
                   ),
                 ),
 
-                // Liquid Emerald Action Next Button
+                // Liquid Indigo Action Next Button
                 InkWell(
                   onTap: canGoNext ? onNext : null,
                   borderRadius: BorderRadius.circular(18),
@@ -666,7 +667,7 @@ class _BottomNavBar extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: canGoNext
                           ? const LinearGradient(
-                              colors: [Color(0xFF10B981), Color(0xFF059669)],
+                              colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             )
@@ -674,13 +675,13 @@ class _BottomNavBar extends StatelessWidget {
                       color: canGoNext
                           ? null
                           : (isDark
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : Colors.black.withValues(alpha: 0.05)),
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.black.withOpacity(0.05)),
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: canGoNext
                           ? [
                               BoxShadow(
-                                color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                                color: const Color(0xFF6366F1).withOpacity(0.4),
                                 blurRadius: 16,
                                 spreadRadius: 1,
                                 offset: const Offset(0, 4),
@@ -695,9 +696,7 @@ class _BottomNavBar extends StatelessWidget {
                           style: TextStyle(
                             fontSize: buttonFontSize,
                             fontWeight: FontWeight.bold,
-                            color: canGoNext
-                                ? Colors.white
-                                : (isDark ? Colors.white24 : Colors.grey.shade400),
+                            color: buttonIssuerColorHelperMethodForName(canGoNext, isDark),
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -718,5 +717,10 @@ class _BottomNavBar extends StatelessWidget {
         ),
       ),
     );
+  }
+  
+  // Вспомогательный стаб для чистоты
+  Color buttonIssuerColorHelperMethodForName(bool canGoNext, bool isDark) {
+    return canGoNext ? Colors.white : (isDark ? Colors.white24 : Colors.grey.shade400);
   }
 }

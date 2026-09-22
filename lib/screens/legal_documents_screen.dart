@@ -7,112 +7,165 @@ class LegalDocumentsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5);
 
     return DefaultTabController(
       length: 5,
       child: Scaffold(
         extendBodyBehindAppBar: true,
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isDark
-                  ? const [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F2942)]
-                  : const [Color(0xFFE2F1E7), Color(0xFFC8E6C9), Color(0xFFE8F5E9)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        body: Stack(
+          children: [
+            // Liquid Background Spheres (единый стиль с приложением)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: isDark
+                        ? const [
+                            Color(0xFF0F172A),
+                            Color(0xFF1E1B4B),
+                            Color(0xFF09090B),
+                          ]
+                        : const [
+                            Color(0xFFF8FAFC),
+                            Color(0xFFEEF2FF),
+                            Color(0xFFE0E7FF),
+                          ],
+                  ),
+                ),
+              ),
             ),
-          ),
-          child: SafeArea(
-            child: Column(
-              children: [
-                // Glassmorphic Header + TabBar
-                ClipRect(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.white.withValues(alpha: 0.4),
-                        border: Border(
-                          bottom: BorderSide(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.12)
-                                : Colors.white.withValues(alpha: 0.8),
-                            width: 1.0,
+            Positioned(
+              top: 80,
+              right: -60,
+              child: Container(
+                width: 240,
+                height: 240,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primaryColor.withValues(alpha: 0.2),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 120,
+              left: -80,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark
+                      ? const Color(0xFF6366F1).withValues(alpha: 0.15)
+                      : const Color(0xFF818CF8).withValues(alpha: 0.15),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                child: const SizedBox.shrink(),
+              ),
+            ),
+            
+            // Основной контент
+            SafeArea(
+              child: Column(
+                children: [
+                  // Glassmorphic Header + TabBar
+                  ClipRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.black.withValues(alpha: 0.2)
+                              : Colors.white.withValues(alpha: 0.3),
+                          border: Border(
+                            bottom: BorderSide(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.12)
+                                  : Colors.white.withValues(alpha: 0.6),
+                              width: 1.0,
+                            ),
                           ),
                         ),
-                      ),
-                      child: Column(
-                        children: [
-                          AppBar(
-                            title: const Text(
-                              'Правовые документы',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            centerTitle: true,
-                            backgroundColor: Colors.transparent,
-                            elevation: 0,
-                            scrolledUnderElevation: 0,
-                          ),
-                          TabBar(
-                            isScrollable: true,
-                            tabAlignment: TabAlignment.start,
-                            indicatorSize: TabBarIndicatorSize.label,
-                            indicator: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              color: isDark
-                                  ? const Color(0xFF10B981).withValues(alpha: 0.3)
-                                  : Colors.teal.shade700.withValues(alpha: 0.15),
-                              border: Border.all(
-                                color: isDark
-                                    ? const Color(0xFF34D399).withValues(alpha: 0.5)
-                                    : Colors.teal.shade600.withValues(alpha: 0.5),
-                                width: 1.2,
+                        child: Column(
+                          children: [
+                            AppBar(
+                              title: Text(
+                                'Правовые документы',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                ),
+                              ),
+                              centerTitle: true,
+                              backgroundColor: Colors.transparent,
+                              elevation: 0,
+                              scrolledUnderElevation: 0,
+                              iconTheme: IconThemeData(
+                                color: isDark ? Colors.white : const Color(0xFF0F172A),
                               ),
                             ),
-                            labelColor: isDark ? const Color(0xFF34D399) : Colors.teal.shade900,
-                            unselectedLabelColor: isDark ? Colors.white60 : Colors.black54,
-                            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-                            padding: const EdgeInsets.only(bottom: 10, left: 12, right: 12),
-                            indicatorPadding: const EdgeInsets.symmetric(horizontal: -10, vertical: 2),
-                            tabs: const [
-                              Tab(text: 'Конфиденциальность'),
-                              Tab(text: 'Условия использования'),
-                              Tab(text: 'Персональные данные'),
-                              Tab(text: 'Возврат средств'),
-                              Tab(text: 'Подписки'),
-                            ],
-                          ),
-                        ],
+                            TabBar(
+                              isScrollable: true,
+                              tabAlignment: TabAlignment.start,
+                              indicatorSize: TabBarIndicatorSize.label,
+                              indicator: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                color: primaryColor.withValues(alpha: 0.25),
+                                border: Border.all(
+                                  color: primaryColor.withValues(alpha: 0.6),
+                                  width: 1.2,
+                                ),
+                              ),
+                              labelColor: primaryColor,
+                              unselectedLabelColor: isDark ? Colors.white60 : Colors.black54,
+                              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+                              padding: const EdgeInsets.only(bottom: 10, left: 12, right: 12),
+                              indicatorPadding: const EdgeInsets.symmetric(horizontal: -10, vertical: 2),
+                              tabs: const [
+                                Tab(text: 'Конфиденциальность'),
+                                Tab(text: 'Условия использования'),
+                                Tab(text: 'Персональные данные'),
+                                Tab(text: 'Возврат средств'),
+                                Tab(text: 'Подписки'),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
 
-                // Tab Content View
-                const Expanded(
-                  child: TabBarView(
-                    children: [
-                      _GlassDocumentContainer(child: PrivacyPolicyContent()),
-                      _GlassDocumentContainer(child: TermsOfUseContent()),
-                      _GlassDocumentContainer(child: PersonalDataConsentContent()),
-                      _GlassDocumentContainer(child: RefundPolicyContent()),
-                      _GlassDocumentContainer(child: SubscriptionTermsContent()),
-                    ],
+                  // Tab Content View
+                  const Expanded(
+                    child: TabBarView(
+                      physics: BouncingScrollPhysics(),
+                      children: [
+                        _GlassDocumentContainer(child: PrivacyPolicyContent()),
+                        _GlassDocumentContainer(child: TermsOfUseContent()),
+                        _GlassDocumentContainer(child: PersonalDataConsentContent()),
+                        _GlassDocumentContainer(child: RefundPolicyContent()),
+                        _GlassDocumentContainer(child: SubscriptionTermsContent()),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
-// Обертка для контента в стиле Glassmorphism
+// Обертка для контента в стиле Glassmorphism (соответствует _GlassCard из настроек)
 class _GlassDocumentContainer extends StatelessWidget {
   final Widget child;
 
@@ -122,34 +175,49 @@ class _GlassDocumentContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final defaultGradient = isDark
+        ? [
+            Colors.white.withValues(alpha: 0.12),
+            Colors.white.withValues(alpha: 0.04),
+          ]
+        : [
+            Colors.white.withValues(alpha: 0.65),
+            Colors.white.withValues(alpha: 0.35),
+          ];
+
+    final defaultBorder = isDark
+        ? Colors.white.withValues(alpha: 0.2)
+        : Colors.white.withValues(alpha: 0.6);
+
+    final defaultShadow = isDark
+        ? Colors.black.withValues(alpha: 0.18)
+        : Colors.blueGrey.withValues(alpha: 0.08);
+
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(16.0),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24.0),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: Container(
             padding: const EdgeInsets.all(22.0),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24.0),
               gradient: LinearGradient(
-                colors: isDark
-                    ? [Colors.white.withValues(alpha: 0.12), Colors.white.withValues(alpha: 0.04)]
-                    : [Colors.white.withValues(alpha: 0.75), Colors.white.withValues(alpha: 0.35)],
+                colors: defaultGradient,
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               border: Border.all(
-                color: isDark ? Colors.white.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.9),
-                width: 1.2,
+                color: defaultBorder,
+                width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: isDark
-                      ? Colors.black.withValues(alpha: 0.25)
-                      : Colors.teal.shade900.withValues(alpha: 0.08),
-                  blurRadius: 20,
+                  color: defaultShadow,
+                  blurRadius: 16,
+                  spreadRadius: 2,
                   offset: const Offset(0, 8),
                 ),
               ],
@@ -169,8 +237,8 @@ class PrivacyPolicyContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF0F5132);
-    final subtextColor = isDark ? Colors.white54 : Colors.teal.shade800.withValues(alpha: 0.7);
+    final textColor = isDark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF0F172A);
+    final subtextColor = isDark ? Colors.white54 : const Color(0xFF475569);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,8 +286,8 @@ class TermsOfUseContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF0F5132);
-    final subtextColor = isDark ? Colors.white54 : Colors.teal.shade800.withValues(alpha: 0.7);
+    final textColor = isDark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF0F172A);
+    final subtextColor = isDark ? Colors.white54 : const Color(0xFF475569);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,8 +339,8 @@ class PersonalDataConsentContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF0F5132);
-    final subtextColor = isDark ? Colors.white54 : Colors.teal.shade800.withValues(alpha: 0.7);
+    final textColor = isDark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF0F172A);
+    final subtextColor = isDark ? Colors.white54 : const Color(0xFF475569);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,8 +375,8 @@ class RefundPolicyContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF0F5132);
-    final subtextColor = isDark ? Colors.white54 : Colors.teal.shade800.withValues(alpha: 0.7);
+    final textColor = isDark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF0F172A);
+    final subtextColor = isDark ? Colors.white54 : const Color(0xFF475569);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,8 +413,8 @@ class SubscriptionTermsContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF0F5132);
-    final subtextColor = isDark ? Colors.white54 : Colors.teal.shade800.withValues(alpha: 0.7);
+    final textColor = isDark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF0F172A);
+    final subtextColor = isDark ? Colors.white54 : const Color(0xFF475569);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

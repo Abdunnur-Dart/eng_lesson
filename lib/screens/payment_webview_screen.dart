@@ -19,6 +19,7 @@ class PaymentWebViewScreen extends StatefulWidget {
 class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
+  double _progress = 0;
 
   // Белый список разрешенных хостов
   final List<String> _allowedHosts = [
@@ -36,6 +37,9 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
         NavigationDelegate(
           onPageStarted: (String url) {
             if (mounted) setState(() => _isLoading = true);
+          },
+          onProgress: (int progress) {
+            if (mounted) setState(() => _progress = progress / 100);
           },
           onPageFinished: (String url) {
             if (mounted) setState(() => _isLoading = false);
@@ -97,12 +101,21 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                   style: TextStyle(
                     color: textColor,
                     fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
                 ),
                 centerTitle: true,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 iconTheme: IconThemeData(color: textColor),
+                actions: [
+                  // Кнопка обновления страницы на случай сбоя
+                  IconButton(
+                    icon: const Icon(Icons.refresh_rounded),
+                    tooltip: 'Обновить',
+                    onPressed: () => _controller.reload(),
+                  ),
+                ],
               ),
             ),
           ),
@@ -110,7 +123,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
       ),
       body: Stack(
         children: [
-          // Живой стеклянный фон под вебвиу
+          // Живой стеклянный фон
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -132,6 +145,7 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               ),
             ),
           ),
+          // Декоративный плавающий элемент для эстетики жидкого стекла
           Positioned(
             top: 100,
             right: -40,
@@ -144,14 +158,31 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
               ),
             ),
           ),
-          // WebView Overlay
+          
+          // WebView с отступом сверху под AppBar
           Positioned.fill(
-            child: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + kToolbarHeight),
               child: WebViewWidget(controller: _controller),
             ),
           ),
-          // Liquid Glass Progress Indicator
+
+          // Тонкий прогресс-бар загрузки под шапкой
           if (_isLoading)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + kToolbarHeight,
+              left: 0,
+              right: 0,
+              child: LinearProgressIndicator(
+                value: _progress > 0 ? _progress : null,
+                backgroundColor: Colors.transparent,
+                color: primaryColor,
+                minHeight: 3,
+              ),
+            ),
+
+          // Красивый модальный лоадер при самом первом открытии
+          if (_isLoading && _progress < 0.1)
             Positioned.fill(
               child: Center(
                 child: ClipRRect(

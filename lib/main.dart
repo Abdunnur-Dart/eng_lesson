@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'package:app_links/app_links.dart';
+import 'package:arabic/presentation/screens/onboarding_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // NEW
 import 'firebase_options.dart';
 import 'screens/auth_payment_screen.dart';
 import 'screens/home_screen.dart';
@@ -49,7 +51,11 @@ void main() async {
     sslEnabled: true,
   );
 
-  runApp(const MyApp());
+  // NEW: Проверяем, показывался ли онбординг раньше
+  final prefs = await SharedPreferences.getInstance();
+  final bool hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+
+  runApp(MyApp(hasSeenOnboarding: hasSeenOnboarding)); // CHANGED
 }
 
 // Функция для получения и вывода FCM токена
@@ -69,7 +75,8 @@ Future<void> _printFcmToken() async {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final bool hasSeenOnboarding; // NEW
+  const MyApp({super.key, required this.hasSeenOnboarding}); // CHANGED
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -187,7 +194,8 @@ class _MyAppState extends State<MyApp> {
               elevation: 0,
             ),
           ),
-          home: const HomeScreen(),
+          // CHANGED: Если пользователь уже видел онбординг, открываем HomeScreen, иначе OnboardingScreen
+          home: widget.hasSeenOnboarding ? const HomeScreen() : const OnboardingScreen(),
         );
       },
     );

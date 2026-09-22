@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:math' as math;
 import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
@@ -74,52 +76,82 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _checkAndShowReviewDialog(double percentage) {
-    if (percentage >= 85.0) {
+    // CHANGED: Проверяем, показывался ли уже запрос отзыва пользователю, чтобы запросить ровно один раз
+    final bool hasRequestedReview = SettingsService.instance.hasRequestedReview; // Предполагается наличие геттера/сеттера в SettingsService
+    
+    if (percentage >= 85.0 && !hasRequestedReview) {
+      // CHANGED: Сохраняем флаг, что отзыв больше повторно запрашиваться не будет
+      SettingsService.instance.setHasRequestedReview(true);
+
       Future.delayed(const Duration(milliseconds: 1200), () {
         if (!mounted) return;
         showDialog(
           context: context,
           builder: (BuildContext dialogContext) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: const Text(
-                'Отличный результат!',
-                textAlign: TextAlign.center,
-              ),
-              content: const Text(
-                'Вам нравится наше приложение? Пожалуйста, оставьте отзыв в RuStore — это очень поможет нам развиваться!',
-                textAlign: TextAlign.center,
-              ),
-              actionsAlignment: MainAxisAlignment.spaceEvenly,
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                  },
-                  child: const Text('Позже'),
+            final isDark = SettingsService.instance.isDarkMode;
+            return BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: AlertDialog(
+                backgroundColor: isDark
+                    ? const Color(0xFF0F172A).withOpacity(0.85)
+                    : Colors.white.withOpacity(0.9),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(32),
+                  side: BorderSide(
+                    color: isDark ? Colors.white.withOpacity(0.2) : Colors.white.withOpacity(0.8),
+                    width: 1.5,
+                  ),
                 ),
-                ElevatedButton(
-                  onPressed: () async {
-                    Navigator.of(dialogContext).pop();
-                    final Uri appUri = Uri.parse(
-                      'https://www.rustore.ru/catalog/app/com.abdteam.muali',
-                    );
-                    try {
-                      await launchUrl(
-                        appUri,
-                        mode: LaunchMode.externalApplication,
+                title: Text(
+                  'Отличный результат!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                content: Text(
+                  'Вам нравится наше приложение? Пожалуйста, оставьте отзыв в RuStore — это очень поможет нам развиваться!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isDark ? Colors.white70 : Colors.black87,
+                    height: 1.4,
+                  ),
+                ),
+                actionsAlignment: MainAxisAlignment.spaceEvenly,
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Позже', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6366F1),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 4,
+                      shadowColor: const Color(0xFF6366F1).withOpacity(0.4),
+                    ),
+                    onPressed: () async {
+                      Navigator.of(dialogContext).pop();
+                      final Uri appUri = Uri.parse(
+                        'https://www.rustore.ru/catalog/app/com.abdteam.muali',
                       );
-                    } catch (e) {
-                      if (kDebugMode) {
-                        print("Ошибка при открытии ссылки RuStore: $e");
+                      try {
+                        await launchUrl(
+                          appUri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      } catch (e) {
+                        if (kDebugMode) {
+                          print("Ошибка при открытии ссылки RuStore: $e");
+                        }
                       }
-                    }
-                  },
-                  child: const Text('Оставить отзыв'),
-                ),
-              ],
+                    },
+                    child: const Text('Оставить отзыв', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
             );
           },
         );
@@ -191,7 +223,7 @@ class _QuizScreenState extends State<QuizScreen> {
   }) {
     Color cardGradientStart = isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.65);
     Color cardGradientEnd = isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white.withValues(alpha: 0.3);
-    Color textColor = isDark ? Colors.white : const Color(0xFF0F5132);
+    Color textColor = isDark ? Colors.white : const Color(0xFF312E81);
     Color borderColor = isDark ? Colors.white.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.8);
     List<BoxShadow>? shadows = [
       BoxShadow(
@@ -203,18 +235,20 @@ class _QuizScreenState extends State<QuizScreen> {
 
     if (_isAnswered) {
       if (index == question.correctOptionIndex) {
-        cardGradientStart = const Color(0xFF10B981).withValues(alpha: 0.85);
-        cardGradientEnd = const Color(0xFF059669).withValues(alpha: 0.75);
+        // Успешный ответ (Neon Indigo/Blue Accent)
+        cardGradientStart = const Color(0xFF6366F1).withValues(alpha: 0.85);
+        cardGradientEnd = const Color(0xFF4F46E5).withValues(alpha: 0.75);
         textColor = Colors.white;
-        borderColor = const Color(0xFF34D399);
+        borderColor = const Color(0xFF818CF8);
         shadows = [
           BoxShadow(
-            color: const Color(0xFF10B981).withValues(alpha: 0.4),
+            color: const Color(0xFF6366F1).withValues(alpha: 0.4),
             blurRadius: 14,
             spreadRadius: 1,
           )
         ];
       } else if (index == _selectedAnswerIndex) {
+        // Неправильный ответ (Neon Red Accent)
         cardGradientStart = const Color(0xFFEF4444).withValues(alpha: 0.85);
         cardGradientEnd = const Color(0xFFDC2626).withValues(alpha: 0.75);
         textColor = Colors.white;
@@ -324,7 +358,7 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.teal.shade900.withValues(alpha: 0.1),
+                color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.indigo.shade900.withValues(alpha: 0.1),
                 blurRadius: 24,
                 offset: const Offset(0, 10),
               ),
@@ -339,10 +373,10 @@ class _QuizScreenState extends State<QuizScreen> {
                       style: TextStyle(
                         fontSize: (shortestSide * 0.12).clamp(48.0, 84.0),
                         fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : const Color(0xFF064E3B),
+                        color: isDark ? Colors.white : const Color(0xFF312E81),
                         shadows: [
                           Shadow(
-                            color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.teal.shade900.withValues(alpha: 0.15),
+                            color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.indigo.shade900.withValues(alpha: 0.15),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -358,7 +392,7 @@ class _QuizScreenState extends State<QuizScreen> {
                       style: TextStyle(
                         fontSize: (shortestSide * 0.042).clamp(16.0, 24.0),
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF064E3B),
+                        color: isDark ? Colors.white : const Color(0xFF312E81),
                         height: 1.35,
                       ),
                       textAlign: TextAlign.center,
@@ -390,14 +424,14 @@ class _QuizScreenState extends State<QuizScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: isDark
-                      ? const [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F2942)]
-                      : const [Color(0xFFE2F1E7), Color(0xFFC8E6C9), Color(0xFFE8F5E9)],
+                      ? const [Color(0xFF0F172A), Color(0xFF1E1B4B), Color(0xFF09090B)]
+                      : const [Color(0xFFF8FAFC), Color(0xFFEEF2FF), Color(0xFFE0E7FF)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
               ),
               child: Center(
-                child: CircularProgressIndicator(color: isDark ? const Color(0xFF34D399) : Colors.teal.shade800),
+                child: CircularProgressIndicator(color: isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5)),
               ),
             ),
           );
@@ -410,8 +444,8 @@ class _QuizScreenState extends State<QuizScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: isDark
-                      ? const [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F2942)]
-                      : const [Color(0xFFE2F1E7), Color(0xFFC8E6C9), Color(0xFFE8F5E9)],
+                      ? const [Color(0xFF0F172A), Color(0xFF1E1B4B), Color(0xFF09090B)]
+                      : const [Color(0xFFF8FAFC), Color(0xFFEEF2FF), Color(0xFFE0E7FF)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -442,14 +476,14 @@ class _QuizScreenState extends State<QuizScreen> {
                                 Icon(
                                   Icons.quiz_outlined,
                                   size: (shortestSide * 0.15).clamp(56.0, 80.0),
-                                  color: isDark ? Colors.white70 : Colors.teal.shade700,
+                                  color: isDark ? Colors.white70 : const Color(0xFF4338CA),
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
                                   'Вопросы для этого урока пока не добавлены. Скоро появятся!',
                                   style: TextStyle(
                                     fontSize: (shortestSide * 0.038).clamp(15.0, 18.0),
-                                    color: isDark ? Colors.white : Colors.teal.shade900,
+                                    color: isDark ? Colors.white : const Color(0xFF312E81),
                                     fontWeight: FontWeight.bold,
                                   ),
                                   textAlign: TextAlign.center,
@@ -457,10 +491,12 @@ class _QuizScreenState extends State<QuizScreen> {
                                 const SizedBox(height: 24),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: isDark ? const Color(0xFF10B981) : Colors.teal.shade800,
+                                    backgroundColor: const Color(0xFF6366F1),
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    elevation: 4,
+                                    shadowColor: const Color(0xFF6366F1).withOpacity(0.4),
                                   ),
                                   onPressed: () => Navigator.pop(context),
                                   child: const Text('Вернуться к урокам', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -498,8 +534,8 @@ class _QuizScreenState extends State<QuizScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: isDark
-                    ? const [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F2942)]
-                    : const [Color(0xFFE2F1E7), Color(0xFFC8E6C9), Color(0xFFE8F5E9)],
+                    ? const [Color(0xFF0F172A), Color(0xFF1E1B4B), Color(0xFF09090B)]
+                    : const [Color(0xFFF8FAFC), Color(0xFFEEF2FF), Color(0xFFE0E7FF)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -521,7 +557,7 @@ class _QuizScreenState extends State<QuizScreen> {
                                 bottom: BorderSide(
                                   color: isDark
                                       ? Colors.white.withValues(alpha: 0.08)
-                                      : Colors.teal.shade900.withValues(alpha: 0.08),
+                                      : Colors.indigo.shade900.withValues(alpha: 0.08),
                                   width: 1.0,
                                 ),
                               ),
@@ -530,7 +566,7 @@ class _QuizScreenState extends State<QuizScreen> {
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                                  color: isDark ? Colors.white : const Color(0xFF0F5132),
+                                  color: isDark ? Colors.white : const Color(0xFF312E81),
                                   onPressed: () => Navigator.pop(context),
                                 ),
                                 const SizedBox(width: 4),
@@ -540,7 +576,7 @@ class _QuizScreenState extends State<QuizScreen> {
                                     style: TextStyle(
                                       fontSize: (screenWidth * 0.022).clamp(15.0, 19.0),
                                       fontWeight: FontWeight.bold,
-                                      color: isDark ? Colors.white : const Color(0xFF0F5132),
+                                      color: isDark ? Colors.white : const Color(0xFF312E81),
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -566,17 +602,17 @@ class _QuizScreenState extends State<QuizScreen> {
                                 borderRadius: BorderRadius.circular(10),
                                 child: Container(
                                   height: isTablet ? 10.0 : 7.0,
-                                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.teal.shade900.withValues(alpha: 0.1),
+                                  color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.indigo.shade900.withValues(alpha: 0.1),
                                   child: FractionallySizedBox(
                                     alignment: Alignment.centerLeft,
                                     widthFactor: (_currentIndex + 1) / activeQuestions.length,
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF10B981),
+                                        color: const Color(0xFF6366F1),
                                         borderRadius: BorderRadius.circular(10),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: const Color(0xFF10B981).withValues(alpha: 0.5),
+                                            color: const Color(0xFF6366F1).withValues(alpha: 0.5),
                                             blurRadius: 8,
                                           )
                                         ],
@@ -589,7 +625,7 @@ class _QuizScreenState extends State<QuizScreen> {
                               Text(
                                 'Вопрос ${_currentIndex + 1} из ${activeQuestions.length}',
                                 style: TextStyle(
-                                  color: isDark ? const Color(0xFF34D399) : const Color(0xFF047857),
+                                  color: isDark ? const Color(0xFF818CF8) : const Color(0xFF4338CA),
                                   fontSize: isTablet ? 15.0 : 13.0,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -743,7 +779,7 @@ class QuizResultModal extends StatelessWidget {
     } else if (percentage < 70) {
       return const Color(0xFFF59E0B);
     } else {
-      return const Color(0xFF10B981);
+      return const Color(0xFF6366F1);
     }
   }
 
@@ -779,7 +815,7 @@ class QuizResultModal extends StatelessWidget {
           child: CircularProgressIndicator(
             value: score / totalQuestions,
             strokeWidth: isTablet ? 10 : 8,
-            backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.teal.shade900.withValues(alpha: 0.1),
+            backgroundColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.indigo.shade900.withValues(alpha: 0.1),
             color: resultColor,
           ),
         ),
@@ -799,7 +835,7 @@ class QuizResultModal extends StatelessWidget {
               style: TextStyle(
                 fontSize: isTablet ? 13 : 11,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white70 : Colors.teal.shade900,
+                color: isDark ? Colors.white70 : Colors.indigo.shade900,
               ),
             ),
           ],
@@ -834,7 +870,7 @@ class QuizResultModal extends StatelessWidget {
                     fontSize: isTablet ? 13 : 12,
                     fontWeight: FontWeight.bold,
                     color: earnedPoints > 0
-                        ? (isDark ? const Color(0xFF34D399) : const Color(0xFF047857))
+                        ? (isDark ? const Color(0xFF818CF8) : const Color(0xFF4338CA))
                         : (isDark ? Colors.white70 : Colors.black54),
                   ),
                 ),
@@ -998,7 +1034,7 @@ class QuizResultModal extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: isTablet ? 22 : 17,
                                     fontWeight: FontWeight.bold,
-                                    color: isDark ? Colors.white : const Color(0xFF0F5132),
+                                    color: isDark ? Colors.white : const Color(0xFF312E81),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -1035,7 +1071,7 @@ class QuizResultModal extends StatelessWidget {
                             style: TextStyle(
                               fontSize: (shortestSide * 0.05).clamp(18.0, 22.0),
                               fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : const Color(0xFF0F5132),
+                              color: isDark ? Colors.white : const Color(0xFF312E81),
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -1118,13 +1154,13 @@ class _Particle {
     isCircle = random.nextBool();
 
     const palette = [
+      Color(0xFF6366F1),
+      Color(0xFF818CF8),
       Color(0xFFFFD700),
       Color(0xFFFF4081),
-      Color(0xFF00E676),
       Color(0xFF00E5FF),
       Color(0xFFFF9100),
       Color(0xFFE040FB),
-      Color(0xFFFF5252),
     ];
     color = palette[random.nextInt(palette.length)];
   }
