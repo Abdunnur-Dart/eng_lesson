@@ -7,35 +7,6 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1008887512826:android:c4cb4edf17ad7a645f9343",
-        "android_client_info": {
-          "package_name": "com.abdteam.arabicmu"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "1008887512826-qj0o9oq7fikks5j4vlev4eedt8enmi7u.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBXr68Y7BQ2kEeCMI7I5nCCx-4pNCumzDo"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1008887512826-qj0o9oq7fikks5j4vlev4eedt8enmi7u.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:1008887512826:android:f8177bcb260fe73c5f9343",
         "android_client_info": {
           "package_name": "com.abdteam.muali"
@@ -43,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "1008887512826-4pv0bjueo9clr7o517b9holkohmdkhhh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.abdteam.muali",
+            "certificate_hash": "955e92b16583c864f3fbe26dc675df5aed28d3dc"
+          }
+        },
+        {
+          "client_id": "1008887512826-qv7p7lp890mne5h3e94vupbgrd4pgj3f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.abdteam.muali",
+            "certificate_hash": "7b37598ed34028b7146a1928d644653adba1d844"
+          }
+        },
+        {
           "client_id": "1008887512826-qj0o9oq7fikks5j4vlev4eedt8enmi7u.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -58,6 +45,13 @@
             {
               "client_id": "1008887512826-qj0o9oq7fikks5j4vlev4eedt8enmi7u.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "1008887512826-p2736ekpiqn2tfem3vmds4nibi5gdtub.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.abdteam.muali"
+              }
             }
           ]
         }
