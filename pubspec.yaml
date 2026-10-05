@@ -43,6 +43,7 @@ flutter:
     - assets/letters_data.json
     - assets/sounds/right.mp3
     - assets/sounds/error.mp3
+    - assets/data/review_questions.json
 
   fonts:
     - family: Amiri
