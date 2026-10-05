@@ -1,0 +1,68 @@
+name: "arabic"
+description: "арабские буквы"
+publish_to: 'none'
+version: 1.0.0+1169
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  shared_preferences: ^2.5.5
+  webview_flutter: ^4.10.0
+  url_launcher: ^6.2.6
+  app_links: ^7.2.1
+  cloud_firestore: ^5.4.0
+  firebase_auth: ^5.2.0
+  connectivity_plus: ^7.3.1
+  http: ^1.6.0
+  firebase_analytics: ^11.3.0
+  firebase_core: ^3.4.0
+  firebase_messaging: ^15.1.0
+  flutter_local_notifications: ^18.0.1
+  google_sign_in: ^7.2.0
+  firebase_app_check: ^0.3.1
+  audioplayers: ^6.8.1
+
+dependency_overrides:
+  package_info_plus: 8.0.0
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4 
+  change_app_package_name: ^1.5.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/letters_data.json
+    - assets/sounds/right.mp3
+    - assets/sounds/error.mp3
+    - assets/data/review_questions.json
+
+  fonts:
+    - family: Amiri
+      fonts:
+        - asset: assets/fonts/AmiriQuran-Regular.ttf
+#        - asset: assets/fonts/Amiri-Bold.ttf
+          weight: 700
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon.png"
+  min_sdk_android: 21
+  
+  # Отключаем стандартную генерацию адаптивного фона с белым кругом, 
+  # если твоя картинка уже квадратная и содержит собственный фон/закругления:
+  adaptive_icon_background: "#FF00A471" # Укажи здесь цвет твоего зеленого фона в HEX, чтобы он сливался
+  adaptive_icon_foreground: "assets/icon.png" # Сама иконка поверх фона
+
+  web:
+    generate: true
+    image_path: "assets/icon.png"
